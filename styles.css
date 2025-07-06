@@ -120,3 +120,17 @@ body {
     filter: drop-shadow(0 10px 15px rgba(255, 255, 255, 0.1));
   }
 }
+
+.legal {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.legal p {
+  font-size: 0.625rem;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.6;
+}
