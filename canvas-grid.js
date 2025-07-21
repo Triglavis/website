@@ -223,8 +223,8 @@
       logo.style.transform = `translate(${logoPosition.x}px, ${logoPosition.y}px) scale(${scale})`;
     }
     
-    // Update depression effect during press
-    if (isPressing && !isDragging) {
+    // Update depression effect during press (even while dragging)
+    if (isPressing) {
       const elapsed = performance.now() - pressStartTime;
       const rawPower = Math.min(elapsed / 2000, 1);
       pressPower = Math.sqrt(rawPower);
@@ -266,9 +266,9 @@
       return true;
     });
     
-    // Calculate depression effect during press OR drag effect
-    if (isPressing && !isDragging && depressionRadius > 0) {
-      // Depression effect for press-and-hold
+    // Calculate depression effect during press (including while dragging)
+    if (isPressing && depressionRadius > 0) {
+      // Depression effect follows the logo position
       const centerX = width / 2 + logoPosition.x;
       const centerY = height / 2 + logoPosition.y;
       
@@ -286,7 +286,7 @@
           }
         }
       }
-    } else if (isDragging) {
+    } else if (isDragging && !isPressing) {
       // Lighter effect for dragging
       const centerX = width / 2 + logoPosition.x;
       const centerY = height / 2 + logoPosition.y;
@@ -423,25 +423,41 @@
   function handlePressEnd(e) {
     e.preventDefault();
     
-    if (isDragging) {
+    if (isDragging || isPressing) {
       isDragging = false;
       
       // Give velocity based on position for spring back
       logoVelocity.x = logoPosition.x * 0.1;
       logoVelocity.y = logoPosition.y * 0.1;
       
-      // Create small release wave from drag
+      // Create wave from current position with press power if available
       const canvasRect = canvas.getBoundingClientRect();
+      const x = canvasRect.width / 2 + logoPosition.x;
+      const y = canvasRect.height / 2 + logoPosition.y;
+      const maxRadius = Math.hypot(canvasRect.width, canvasRect.height) * 1.5;
+      
+      // Use press power if we have it, otherwise default
+      const wavePower = pressPower > 0 ? Math.max(0.5, pressPower * 1.5) : 0.3;
+      const duration = pressPower > 0 ? 3000 : 800;
+      const thickness = pressPower > 0 ? 
+        Math.min(300, maxRadius * 0.3 * (1 + wavePower * 2)) : 
+        40;
+      
       waves.push({
-        x: canvasRect.width / 2 + logoPosition.x,
-        y: canvasRect.height / 2 + logoPosition.y,
+        x,
+        y,
         startTime: performance.now(),
-        duration: 800,
-        maxRadius: Math.hypot(canvasRect.width, canvasRect.height) * 0.5,
-        thickness: 40,
-        power: 0.3
+        duration,
+        maxRadius,
+        thickness,
+        power: wavePower
       });
-    } else if (isPressing && !hasMoved) {
+      
+      // Spring the logo back if we have press power
+      if (pressPower > 0) {
+        logoSpring.velocity = pressPower * 2;
+      }
+    } else if (false) { // Remove duplicate condition
       // Create wave from press-and-hold
       const canvasRect = canvas.getBoundingClientRect();
       const x = canvasRect.width / 2 + logoPosition.x;
@@ -517,7 +533,7 @@
       const moveDistance = Math.hypot(currentX - dragStartX, currentY - dragStartY);
       if (moveDistance > 5) { // 5px threshold
         isDragging = true;
-        isPressing = false;
+        // Don't reset isPressing - keep press power for wave
         hasMoved = true;
       }
     }
