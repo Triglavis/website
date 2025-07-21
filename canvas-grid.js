@@ -26,7 +26,7 @@
   let logoPosition = { x: 0, y: 0 };
   let logoVelocity = { x: 0, y: 0 };
   let lastDragTime = 0;
-  let dragTrailWaves = [];
+  let hasMoved = false;
   
   // Mobile tap fade state
   let isMobile = false;
@@ -88,6 +88,8 @@
     // Drag events
     window.addEventListener('mousemove', handleDragMove);
     window.addEventListener('touchmove', handleDragMove);
+    window.addEventListener('mouseup', handleDragEnd);
+    window.addEventListener('touchend', handleDragEnd);
     
     window.addEventListener('resize', debounce(updateCanvasSize, 250));
     
@@ -214,28 +216,22 @@
       logoSpring.position += logoSpring.velocity;
     }
     
-    // Apply combined transform to logo
+    // Apply transform to logo
     const logo = document.querySelector('.logo-wrapper');
     if (logo) {
       const scale = 1 + logoSpring.position * 0.2;
-      const translateX = logoPosition.x;
-      const translateY = logoPosition.y;
-      logo.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+      logo.style.transform = `translate(${logoPosition.x}px, ${logoPosition.y}px) scale(${scale})`;
     }
     
-    // Update depression effect
-    if (isPressing) {
+    // Update depression effect during press
+    if (isPressing && !isDragging) {
       const elapsed = performance.now() - pressStartTime;
-      // Use square root for faster initial growth, then linear
       const rawPower = Math.min(elapsed / 2000, 1);
-      pressPower = Math.sqrt(rawPower); // Faster initial response
+      pressPower = Math.sqrt(rawPower);
       depressionRadius = pressPower * 300;
       
       // Push logo "into" the page
       logoSpring.position = -pressPower * 0.5;
-      const logo = document.querySelector('.logo-wrapper');
-      const scale = 1 + logoSpring.position * 0.2;
-      logo.style.transform = `scale(${scale})`;
     }
     
     // Create intensity map for all cells
@@ -270,8 +266,9 @@
       return true;
     });
     
-    // Calculate depression effect during press (follows logo position)
-    if (isPressing && depressionRadius > 0) {
+    // Calculate depression effect during press OR drag effect
+    if (isPressing && !isDragging && depressionRadius > 0) {
+      // Depression effect for press-and-hold
       const centerX = width / 2 + logoPosition.x;
       const centerY = height / 2 + logoPosition.y;
       
@@ -284,9 +281,28 @@
           if (distance < depressionRadius) {
             const normalized = distance / depressionRadius;
             const index = row * cols + col;
-            // Create a depression that gets darker toward the center
             const depressionIntensity = (1 - normalized) * pressPower;
             intensityMap[index] = Math.max(intensityMap[index], depressionIntensity);
+          }
+        }
+      }
+    } else if (isDragging) {
+      // Lighter effect for dragging
+      const centerX = width / 2 + logoPosition.x;
+      const centerY = height / 2 + logoPosition.y;
+      const effectRadius = 120;
+      
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const cellX = col * CELL_SIZE + CELL_SIZE / 2;
+          const cellY = row * CELL_SIZE + CELL_SIZE / 2;
+          const distance = Math.hypot(cellX - centerX, cellY - centerY);
+          
+          if (distance < effectRadius) {
+            const normalized = distance / effectRadius;
+            const index = row * cols + col;
+            const intensity = (1 - normalized) * 0.5;
+            intensityMap[index] = Math.max(intensityMap[index], intensity);
           }
         }
       }
@@ -382,16 +398,15 @@
 
   function handlePressStart(e) {
     e.preventDefault();
+    
+    // Start press behavior (not dragging yet)
     isPressing = true;
     pressStartTime = performance.now();
     pressPower = 0;
     depressionRadius = 0;
+    hasMoved = false;
     
-    // Set grabbing cursor immediately
-    const logo = document.querySelector('.logo-wrapper');
-    if (logo) logo.style.cursor = 'grabbing';
-    
-    // Store initial position for drag detection
+    // Store initial mouse/touch position
     if (e.type === 'mousedown') {
       dragStartX = e.clientX;
       dragStartY = e.clientY;
@@ -399,29 +414,44 @@
       dragStartX = e.touches[0].clientX;
       dragStartY = e.touches[0].clientY;
     }
+    
+    // Set grabbing cursor
+    const logo = document.querySelector('.logo-wrapper');
+    if (logo) logo.style.cursor = 'grabbing';
   }
   
   function handlePressEnd(e) {
-    if (!isPressing && !isDragging) return;
     e.preventDefault();
     
-    // Reset cursor to grab
-    const logo = document.querySelector('.logo-wrapper');
-    if (logo) logo.style.cursor = 'grab';
-    
-    if (isPressing) {
-      isPressing = false;
+    if (isDragging) {
+      isDragging = false;
       
-      // Create wave based on press power from current logo position
+      // Give velocity based on position for spring back
+      logoVelocity.x = logoPosition.x * 0.1;
+      logoVelocity.y = logoPosition.y * 0.1;
+      
+      // Create small release wave from drag
+      const canvasRect = canvas.getBoundingClientRect();
+      waves.push({
+        x: canvasRect.width / 2 + logoPosition.x,
+        y: canvasRect.height / 2 + logoPosition.y,
+        startTime: performance.now(),
+        duration: 800,
+        maxRadius: Math.hypot(canvasRect.width, canvasRect.height) * 0.5,
+        thickness: 40,
+        power: 0.3
+      });
+    } else if (isPressing && !hasMoved) {
+      // Create wave from press-and-hold
       const canvasRect = canvas.getBoundingClientRect();
       const x = canvasRect.width / 2 + logoPosition.x;
       const y = canvasRect.height / 2 + logoPosition.y;
-      const maxRadius = Math.hypot(canvasRect.width / 2, canvasRect.height / 2) * 1.5;
+      const maxRadius = Math.hypot(canvasRect.width, canvasRect.height) * 1.5;
       
       // Wave properties scale with press power
-      const wavePower = Math.max(0.3, pressPower); // Higher minimum for visibility
-      const duration = 1200 / (0.5 + wavePower * 0.5); // Faster waves for stronger presses
-      const thickness = Math.min(150, maxRadius * 0.2 * (1 + wavePower * 1.5)); // Thicker waves
+      const wavePower = Math.max(0.5, pressPower * 1.5); // Increased power scaling
+      const duration = 3000; // Even slower for better perception
+      const thickness = Math.min(300, maxRadius * 0.3 * (1 + wavePower * 2)); // Much thicker waves
       
       waves.push({
         x,
@@ -433,13 +463,19 @@
         power: wavePower
       });
       
-      // Spring the logo back with velocity proportional to press power
+      // Spring the logo back
       logoSpring.velocity = pressPower * 2;
-      
-      // Reset press state
-      pressPower = 0;
-      depressionRadius = 0;
     }
+    
+    // Reset states
+    isPressing = false;
+    pressPower = 0;
+    depressionRadius = 0;
+    hasMoved = false;
+    
+    // Reset cursor
+    const logo = document.querySelector('.logo-wrapper');
+    if (logo) logo.style.cursor = 'grab';
   }
 
   function handleMouseMove(e) {
@@ -463,8 +499,10 @@
   }
   
   function handleDragMove(e) {
-    if (!isPressing) return;
+    if (!isPressing && !isDragging) return;
+    e.preventDefault();
     
+    // Get current mouse/touch position
     let currentX, currentY;
     if (e.type === 'mousemove') {
       currentX = e.clientX;
@@ -474,66 +512,57 @@
       currentY = e.touches[0].clientY;
     }
     
-    const dragDistance = Math.hypot(currentX - dragStartX, currentY - dragStartY);
-    
-    // Start dragging if moved more than 5 pixels
-    if (dragDistance > 5 && !isDragging) {
-      isDragging = true;
-      isPressing = false; // Cancel press behavior
+    // Check if we should start dragging
+    if (!isDragging && isPressing) {
+      const moveDistance = Math.hypot(currentX - dragStartX, currentY - dragStartY);
+      if (moveDistance > 5) { // 5px threshold
+        isDragging = true;
+        isPressing = false;
+        hasMoved = true;
+      }
     }
     
     if (isDragging) {
-      // Update logo position with some resistance
-      const resistance = 0.7; // Less resistance for further dragging
-      logoPosition.x = (currentX - dragStartX) * resistance;
-      logoPosition.y = (currentY - dragStartY) * resistance;
+      // Calculate position relative to center of viewport
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const targetX = (currentX - centerX) * 0.8;
+      const targetY = (currentY - centerY) * 0.8;
       
-      // Auto-release if dragged beyond maximum distance
-      const maxDrag = 2400; // 3x larger drag area
-      const currentDrag = Math.hypot(logoPosition.x, logoPosition.y);
-      if (currentDrag > maxDrag) {
-        // Trigger auto-release with strong velocity
-        isDragging = false;
-        isPressing = false;
-        
-        // Calculate release velocity based on overshoot
-        const overshoot = currentDrag - maxDrag;
-        const releaseBoost = 1 + (overshoot / 100); // Extra velocity for dramatic release
-        logoVelocity.x = (logoPosition.x / currentDrag) * 15 * releaseBoost;
-        logoVelocity.y = (logoPosition.y / currentDrag) * 15 * releaseBoost;
-        
-        // Create a burst wave at release point
+      // Constrain to maximum drag radius
+      const maxDrag = 300;
+      const distance = Math.hypot(targetX, targetY);
+      
+      if (distance <= maxDrag) {
+        logoPosition.x = targetX;
+        logoPosition.y = targetY;
+      } else {
+        // Constrain to circle edge
+        const angle = Math.atan2(targetY, targetX);
+        logoPosition.x = Math.cos(angle) * maxDrag;
+        logoPosition.y = Math.sin(angle) * maxDrag;
+      }
+      
+      // Create trail waves occasionally
+      const now = performance.now();
+      if (now - lastDragTime > 100) {
         const canvasRect = canvas.getBoundingClientRect();
         waves.push({
           x: canvasRect.width / 2 + logoPosition.x,
           y: canvasRect.height / 2 + logoPosition.y,
-          startTime: performance.now(),
-          duration: 1000,
-          maxRadius: Math.hypot(width, height),
-          thickness: 80,
-          power: 0.8
+          startTime: now,
+          duration: 600,
+          maxRadius: 100,
+          thickness: 30,
+          power: 0.2
         });
-        
-        // Update cursor
-        document.querySelector('.logo-wrapper').style.cursor = 'grab';
+        lastDragTime = now;
       }
     }
   }
   
   function handleDragEnd(e) {
     if (isDragging) {
-      isDragging = false;
-      // Give initial velocity based on position
-      logoVelocity.x = logoPosition.x * 0.1;
-      logoVelocity.y = logoPosition.y * 0.1;
-      
-      // Reset cursor
-      const logo = document.querySelector('.logo-wrapper');
-      if (logo) logo.style.cursor = 'grab';
-    }
-    
-    // Also handle as press end if still pressing
-    if (isPressing) {
       handlePressEnd(e);
     }
   }
