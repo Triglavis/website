@@ -159,17 +159,11 @@ body {
 }
 
 .logo-wrapper {
-  cursor: pointer;
-  transition: transform 0.2s ease-out;
+  cursor: grab;
   display: inline-block;
   position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
-.logo-wrapper:hover {
-  transform: scale(1.05);
-}
-
-.logo-wrapper:active {
-  transform: scale(0.95);
-}
 
