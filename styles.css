@@ -43,6 +43,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .container {
@@ -66,6 +70,7 @@ body {
   width: 200px;
   height: 200px;
   filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1));
+  display: block;
 }
 
 .company-name {
@@ -128,4 +133,43 @@ body {
   font-size: 0.625rem;
   color: hsl(var(--muted-foreground));
   opacity: 0.6;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
+
+/* Canvas Grid Styles */
+.pixel-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: auto;
+  background: transparent;
+}
+
+
+/* Ensure logo stays on top */
+.container {
+  position: relative;
+  z-index: 10;
+}
+
+.logo-wrapper {
+  cursor: pointer;
+  transition: transform 0.2s ease-out;
+  display: inline-block;
+  position: relative;
+}
+
+.logo-wrapper:hover {
+  transform: scale(1.05);
+}
+
+.logo-wrapper:active {
+  transform: scale(0.95);
+}
+

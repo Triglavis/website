@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <canvas class="pixel-canvas" id="pixelCanvas"></canvas>
     <main class="container">
         <div class="content">
-            <picture>
+            <picture class="logo-wrapper" id="logoWrapper">
                 <source srcset="triglavis_dark.svg" media="(prefers-color-scheme: dark)">
                 <img src="triglavis.svg" alt="Triglavis Logo" class="logo">
             </picture>
@@ -20,6 +21,7 @@
     <footer class="legal">
         <p>© 2025 Triglavis™</p>
     </footer>
+    <script src="canvas-grid.js"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4741e2cbd24343ff8a9688436ea53d68"}'></script>
     <!-- End Cloudflare Web Analytics -->
