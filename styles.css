@@ -121,22 +121,91 @@ body {
   }
 }
 
-.legal {
+/* Import Space Mono font */
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400&display=swap');
+
+/* Copyright border */
+.copyright-border {
   position: fixed;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
+  inset: 9px;
+  pointer-events: none;
+  z-index: 100;
 }
 
-.legal p {
-  font-size: 0.625rem;
+.copyright-border span {
+  position: absolute;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
   color: hsl(var(--muted-foreground));
-  opacity: 0.6;
-  user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
+  opacity: 0.4;
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.copyright-top {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1em;
+  animation: scrollLeft 30s linear infinite;
+}
+
+.copyright-right {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  animation: scrollUp 25s linear infinite;
+}
+
+.copyright-bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1em;
+  direction: rtl;
+  animation: scrollRight 30s linear infinite;
+}
+
+.copyright-left {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 1em;
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  animation: scrollDown 25s linear infinite;
+}
+
+@keyframes scrollLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes scrollRight {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(50%); }
+}
+
+@keyframes scrollUp {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes scrollDown {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(50%); }
+}
+
+/* Remove old legal footer styles */
+.legal {
+  display: none;
 }
 
 /* Canvas Grid Styles */
