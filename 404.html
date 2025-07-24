@@ -103,21 +103,7 @@
         /* Import Space Mono font */
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400&display=swap');
         
-        /* Copyright text */
-        .copyright-text {
-            position: fixed;
-            bottom: 9px;
-            right: 9px;
-            font-family: 'Space Mono', monospace;
-            font-size: 10px;
-            color: hsl(var(--muted-foreground));
-            opacity: 0.4;
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            z-index: 100;
-        }
+        /* Copyright container - inherits from main styles.css */
     </style>
     <script>
         // Fuzzy matching for smart 404 redirects
@@ -241,7 +227,10 @@
             </div>
         </div>
     </main>
-    <div class="copyright-text">© 2025 Triglavis LLC™</div>
+    <div class="copyright-container">
+        <span class="copyright-text">© 2025 Triglavis LLC™</span>
+        <a href="mailto:support@triglavis.com" class="copyright-contact">Contact</a>
+    </div>
     <script src="/canvas-grid.js"></script>
 </body>
 </html>

@@ -125,10 +125,17 @@ body {
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400&display=swap');
 
 /* Copyright text */
-.copyright-text {
+.copyright-container {
   position: fixed;
   bottom: 9px;
   right: 9px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 100;
+}
+
+.copyright-text {
   font-family: 'Space Mono', monospace;
   font-size: 10px;
   color: hsl(var(--muted-foreground));
@@ -137,7 +144,25 @@ body {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  z-index: 100;
+}
+
+.copyright-contact {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: #000;
+  background: #fff;
+  padding: 2px 8px;
+  text-decoration: none;
+  border-radius: 2px;
+  opacity: 0.9;
+}
+
+@media (prefers-color-scheme: dark) {
+  .copyright-contact {
+    color: #fff;
+    background: #000;
+    border: 1px solid #333;
+  }
 }
 
 /* Canvas Grid Styles */
