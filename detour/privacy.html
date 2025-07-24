@@ -113,13 +113,10 @@
             margin: 3rem 0;
         }
         
-        /* Remove pixel canvas for privacy page */
-        .pixel-canvas {
-            display: none;
-        }
     </style>
 </head>
 <body>
+    <canvas class="pixel-canvas" id="pixelCanvas"></canvas>
     <div class="privacy-container">
         <div class="header">
             <img src="https://raw.githubusercontent.com/Triglavis/detour/main/images/icon128.png" alt="Detour Icon">
@@ -191,5 +188,6 @@
     <footer class="legal">
         <p>© 2025 Triglavis LLC™</p>
     </footer>
+    <script src="../canvas-grid.js"></script>
 </body>
 </html>

@@ -20,6 +20,11 @@
             height: 128px;
             margin-bottom: 2rem;
             filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1));
+            cursor: grab;
+            display: inline-block;
+            position: relative;
+            transform-style: preserve-3d;
+            will-change: transform;
         }
         
         .tagline {
@@ -77,17 +82,13 @@
                 filter: drop-shadow(0 10px 15px rgba(255, 255, 255, 0.1));
             }
         }
-        
-        /* Remove pixel canvas for this page */
-        .pixel-canvas {
-            display: none;
-        }
     </style>
 </head>
 <body>
+    <canvas class="pixel-canvas" id="pixelCanvas"></canvas>
     <main class="container">
         <div class="content">
-            <img src="https://raw.githubusercontent.com/Triglavis/detour/main/images/icon128.png" alt="Detour Logo" class="detour-logo">
+            <img src="https://raw.githubusercontent.com/Triglavis/detour/main/images/icon128.png" alt="Detour Logo" class="detour-logo" id="logoWrapper">
             
             <h1 class="company-name">Detour</h1>
             
@@ -107,9 +108,9 @@
             </div>
         </div>
     </main>
-    
     <footer class="legal">
         <p>© 2025 Triglavis LLC™</p>
     </footer>
+    <script src="../canvas-grid.js"></script>
 </body>
 </html>
