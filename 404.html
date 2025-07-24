@@ -99,6 +99,25 @@
                 font-size: 1rem;
             }
         }
+        
+        /* Import Space Mono font */
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400&display=swap');
+        
+        /* Copyright text */
+        .copyright-text {
+            position: fixed;
+            bottom: 9px;
+            right: 9px;
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: hsl(var(--muted-foreground));
+            opacity: 0.4;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            z-index: 100;
+        }
     </style>
     <script>
         // Fuzzy matching for smart 404 redirects
@@ -109,7 +128,6 @@
             // Define all known pages with keywords
             const pages = [
                 { url: '/', keywords: ['home', 'index', 'main', 'triglavis', 'start'] },
-                { url: '/detour/', keywords: ['detour', 'extension', 'chrome', 'browser', 'productivity', 'bookmark'] },
                 { url: '/detour/privacy.html', keywords: ['privacy', 'policy', 'data', 'security', 'gdpr', 'terms'] }
             ];
             
@@ -215,10 +233,6 @@
                         <span>Triglavis Home</span>
                         <span>→</span>
                     </a>
-                    <a href="/detour/" class="page-link">
-                        <span>Detour Extension</span>
-                        <span>→</span>
-                    </a>
                     <a href="/detour/privacy.html" class="page-link">
                         <span>Privacy Policy</span>
                         <span>→</span>
@@ -227,9 +241,7 @@
             </div>
         </div>
     </main>
-    <footer class="legal">
-        <p>© 2025 Triglavis LLC™</p>
-    </footer>
+    <div class="copyright-text">© 2025 Triglavis LLC™</div>
     <script src="/canvas-grid.js"></script>
 </body>
 </html>
