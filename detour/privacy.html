@@ -85,11 +85,39 @@
             align-items: center;
             gap: 0.5rem;
             margin-bottom: 1rem;
-            color: hsl(var(--foreground));
+            padding: 0.5rem 1rem;
+            background: #000;
+            color: #fff;
             text-decoration: none;
             font-family: 'Space Mono', monospace;
             font-size: 0.875rem;
-            opacity: 0.7;
+            border-radius: var(--radius);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        
+        .back-link:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .back-link:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .back-link {
+                background: #fff;
+                color: #000;
+            }
+            
+            .back-link:hover {
+                box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+            }
+            
+            .back-link:active {
+                box-shadow: 0 1px 4px rgba(255, 255, 255, 0.2);
+            }
         }
         
         
