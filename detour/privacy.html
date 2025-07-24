@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Detour Privacy Policy - Chrome Extension by Triglavis">
+    <title>Detour Privacy Policy - Triglavis</title>
+    <link rel="icon" type="image/svg+xml" href="../triglavis.svg">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* Override some styles for privacy page */
+        body {
+            align-items: flex-start;
+            padding-top: 2rem;
+            min-height: 100vh;
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+        }
+        
+        .privacy-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+        
+        .header img {
+            width: 48px;
+            height: 48px;
+        }
+        
+        h1 {
+            font-family: 'Söhne Breit', 'Inter', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 750;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin: 0;
+        }
+        
+        h2 {
+            font-family: 'Söhne Breit', 'Inter', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 750;
+            letter-spacing: -0.01em;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        p, li {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+            font-weight: 400;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .last-updated {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 3rem;
+            color: hsl(var(--foreground));
+            text-decoration: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .back-link:hover {
+            opacity: 1;
+        }
+        
+        a {
+            color: hsl(var(--foreground));
+            opacity: 0.8;
+        }
+        
+        a:hover {
+            opacity: 1;
+        }
+        
+        strong {
+            font-weight: 600;
+        }
+        
+        .divider {
+            height: 1px;
+            background: hsl(var(--border));
+            margin: 3rem 0;
+        }
+        
+        /* Remove pixel canvas for privacy page */
+        .pixel-canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="privacy-container">
+        <div class="header">
+            <img src="https://raw.githubusercontent.com/Triglavis/detour/main/images/icon128.png" alt="Detour Icon">
+            <h1>Detour Privacy Policy</h1>
+        </div>
+        
+        <p class="last-updated">Last Updated: January 24, 2025</p>
+        
+        <h2>Overview</h2>
+        <p>Detour is a Chrome extension developed by Triglavis that helps you build better browsing habits by redirecting you from distracting websites to your reading list. We are committed to protecting your privacy and ensuring your data remains yours.</p>
+        
+        <h2>Data Collection</h2>
+        <p><strong>We do not collect any personal data.</strong> Detour operates entirely on your device with no external servers or data transmission.</p>
+        
+        <h2>Local Storage</h2>
+        <p>Detour stores the following information locally on your device using Chrome's storage API:</p>
+        <ul>
+            <li>Extension settings (daily goals, enabled sites, theme preference)</li>
+            <li>Reading progress (articles read today, goal completion status)</li>
+            <li>Selected bookmark folder or reading list preference</li>
+            <li>Temporarily snoozed websites and duration</li>
+            <li>License key (if you choose to support the extension)</li>
+        </ul>
+        <p>This data is stored locally and synced only through your Chrome account if you have Chrome Sync enabled. We have no access to this information.</p>
+        
+        <h2>Permissions</h2>
+        <p>Detour requires the following permissions to function:</p>
+        <ul>
+            <li><strong>Storage:</strong> To save your settings and reading progress</li>
+            <li><strong>Bookmarks:</strong> To access bookmark folders you select for reading</li>
+            <li><strong>Reading List:</strong> To support Chrome's built-in Reading List feature</li>
+            <li><strong>Active Tab:</strong> To detect when you visit distracting websites</li>
+            <li><strong>Notifications:</strong> To notify you when you achieve your daily reading goal</li>
+            <li><strong>Host Permissions:</strong> Limited to popular distracting sites (YouTube, Twitter/X, Reddit, etc.) to enable redirects</li>
+        </ul>
+        
+        <h2>Third-Party Services</h2>
+        <p>Detour does not integrate with any analytics services, tracking pixels, or third-party APIs. The extension operates entirely offline once installed.</p>
+        
+        <h2>Data Security</h2>
+        <p>Your data is protected by:</p>
+        <ul>
+            <li>Chrome's built-in extension security model</li>
+            <li>Local-only data storage (no transmission to external servers)</li>
+            <li>Your device's security measures</li>
+        </ul>
+        
+        <h2>License Information</h2>
+        <p>If you purchase a supporter license through LemonSqueezy, that transaction is handled entirely by LemonSqueezy according to their privacy policy. Detour only stores your license key locally for validation—we do not transmit or verify it against any external server.</p>
+        
+        <h2>Changes to This Policy</h2>
+        <p>We may update this privacy policy periodically. Any changes will be reflected on this page with an updated revision date. The extension will continue to operate under the same privacy principles: no data collection, no tracking, local-only operation.</p>
+        
+        <h2>Contact</h2>
+        <p>For questions about this privacy policy or Detour:</p>
+        <ul>
+            <li>GitHub Issues: <a href="https://github.com/Triglavis/detour/issues" target="_blank">github.com/Triglavis/detour/issues</a></li>
+            <li>Company: <a href="https://triglavis.com" target="_blank">Triglavis LLC</a></li>
+        </ul>
+        
+        <div class="divider"></div>
+        
+        <a href="../" class="back-link">
+            <span>←</span>
+            <span>Back to Triglavis</span>
+        </a>
+    </div>
+    
+    <footer class="legal">
+        <p>© 2025 Triglavis LLC™</p>
+    </footer>
+</body>
+</html>
