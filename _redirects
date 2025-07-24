@@ -1,4 +1,5 @@
-# Redirect /detour/ to privacy policy
+# Redirect /detour and /detour/ to privacy policy
+/detour     /detour/privacy.html    301
 /detour/    /detour/privacy.html    301
 
 # Serve custom 404 page for all not found routes
