@@ -11,7 +11,7 @@
         /* Override some styles for privacy page */
         body {
             align-items: flex-start;
-            padding-top: 2rem;
+            padding-top: 1rem;
             min-height: 100vh;
             user-select: text;
             -webkit-user-select: text;
@@ -22,25 +22,26 @@
         .privacy-container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 1rem;
             animation: fadeIn 0.6s ease-out;
         }
         
         .header {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 3rem;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            margin-top: 0.5rem;
         }
         
         .header img {
-            width: 48px;
-            height: 48px;
+            width: 36px;
+            height: 36px;
         }
         
         h1 {
             font-family: 'Söhne Breit', 'Inter', sans-serif;
-            font-size: 2.5rem;
+            font-size: 1.75rem;
             font-weight: 750;
             letter-spacing: -0.02em;
             line-height: 1.2;
@@ -49,43 +50,45 @@
         
         h2 {
             font-family: 'Söhne Breit', 'Inter', sans-serif;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 750;
             letter-spacing: -0.01em;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
         }
         
         p, li {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+            font-family: 'Space Mono', monospace;
             font-weight: 400;
-            line-height: 1.6;
-            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            margin-bottom: 0.5rem;
         }
         
         ul {
-            padding-left: 1.5rem;
-            margin-bottom: 1rem;
+            padding-left: 1.25rem;
+            margin-bottom: 0.5rem;
         }
         
         li {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
         
         .last-updated {
             color: hsl(var(--muted-foreground));
-            font-size: 0.875rem;
-            margin-bottom: 2rem;
+            font-size: 0.75rem;
+            margin-bottom: 1rem;
         }
         
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            margin-top: 3rem;
+            margin-bottom: 1rem;
             color: hsl(var(--foreground));
             text-decoration: none;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
             opacity: 0.7;
         }
         
@@ -103,7 +106,7 @@
         .divider {
             height: 1px;
             background: hsl(var(--border));
-            margin: 3rem 0;
+            margin: 1.5rem 0;
         }
         
         /* Import Space Mono font */
@@ -129,6 +132,10 @@
 <body>
     <canvas class="pixel-canvas" id="pixelCanvas"></canvas>
     <div class="privacy-container">
+        <a href="../" class="back-link">
+            <span>←</span>
+            <span>Back to Triglavis</span>
+        </a>
         <div class="header">
             <img src="detour-icon.png" alt="Detour Icon">
             <h1>Detour Privacy Policy</h1>
@@ -183,13 +190,6 @@
         
         <h2>Contact</h2>
         <p>For questions about this privacy policy or Detour, please contact us through <a href="https://triglavis.com" target="_blank">Triglavis LLC</a>.</p>
-        
-        <div class="divider"></div>
-        
-        <a href="../" class="back-link">
-            <span>←</span>
-            <span>Back to Triglavis</span>
-        </a>
     </div>
     
     <div class="copyright-text">© 2025 Triglavis LLC™</div>
