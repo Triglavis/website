@@ -106,6 +106,87 @@
             margin: 3rem 0;
         }
         
+        /* Import Space Mono font */
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400&display=swap');
+        
+        /* Copyright border */
+        .copyright-border {
+            position: fixed;
+            inset: 9px;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .copyright-border span {
+            position: absolute;
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: hsl(var(--muted-foreground));
+            opacity: 0.4;
+            white-space: nowrap;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        .copyright-top {
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1em;
+            animation: scrollLeft 30s linear infinite;
+        }
+        
+        .copyright-right {
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 1em;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            animation: scrollUp 25s linear infinite;
+        }
+        
+        .copyright-bottom {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1em;
+            direction: rtl;
+            animation: scrollRight 30s linear infinite;
+        }
+        
+        .copyright-left {
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 1em;
+            writing-mode: vertical-lr;
+            text-orientation: mixed;
+            animation: scrollDown 25s linear infinite;
+        }
+        
+        @keyframes scrollLeft {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        @keyframes scrollRight {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(50%); }
+        }
+        
+        @keyframes scrollUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+        
+        @keyframes scrollDown {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50%); }
+        }
     </style>
 </head>
 <body>
@@ -174,6 +255,13 @@
         </a>
     </div>
     
+    <!-- Copyright border -->
+    <div class="copyright-border">
+        <span class="copyright-top">© 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™</span>
+        <span class="copyright-right">© 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™</span>
+        <span class="copyright-bottom">© 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™</span>
+        <span class="copyright-left">© 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™ • © 2025 Triglavis LLC™</span>
+    </div>
     <script src="../canvas-grid.js"></script>
 </body>
 </html>
