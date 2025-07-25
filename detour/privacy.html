@@ -13,10 +13,18 @@
             align-items: flex-start;
             padding-top: 1rem;
             min-height: 100vh;
-            user-select: text;
-            -webkit-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+        }
+        
+        /* Ensure all text content is selectable */
+        body * {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
         }
         
         .privacy-container {
@@ -106,14 +114,13 @@
     </style>
 </head>
 <body>
-    <canvas class="pixel-canvas" id="pixelCanvas"></canvas>
     <div class="privacy-container">
         <div class="header">
             <img src="detour-icon.png" alt="Detour Icon">
             <h1>Detour Privacy Policy</h1>
         </div>
         
-        <p class="last-updated">Last Updated: January 24, 2025</p>
+        <p class="last-updated">Last Updated: July 24, 2025</p>
         
         <h2>Overview</h2>
         <p>Detour is a Chrome extension developed by Triglavis that helps you build better browsing habits by redirecting you from distracting websites to your reading list. We are committed to protecting your privacy and ensuring your data remains yours.</p>
@@ -129,6 +136,11 @@
             <li>Selected bookmark folder or reading list preference</li>
             <li>Temporarily snoozed websites and duration</li>
             <li>License key (if you choose to support the extension)</li>
+            <li>Error logs (limited buffer of recent errors for debugging)</li>
+            <li>Redirect locks (temporary data to prevent redirect loops)</li>
+            <li>Toast notification states</li>
+            <li>Theme preferences (light/dark/system)</li>
+            <li>Actual theme state for system detection</li>
         </ul>
         <p>This data is stored locally and synced only through your Chrome account if you have Chrome Sync enabled. We have no access to this information.</p>
         
@@ -138,13 +150,19 @@
             <li><strong>Storage:</strong> To save your settings and reading progress</li>
             <li><strong>Bookmarks:</strong> To access bookmark folders you select for reading</li>
             <li><strong>Reading List:</strong> To support Chrome's built-in Reading List feature</li>
-            <li><strong>Active Tab:</strong> To detect when you visit distracting websites</li>
-            <li><strong>Notifications:</strong> To notify you when you achieve your daily reading goal</li>
+            <li><strong>Tabs:</strong> To detect when you visit distracting websites and manage redirects</li>
+            <li><strong>Scripting:</strong> To display toast notifications within web pages</li>
+            <li><strong>Alarms:</strong> To schedule daily progress resets and periodic license checks</li>
             <li><strong>Host Permissions:</strong> Limited to popular distracting sites (YouTube, Twitter/X, Reddit, etc.) to enable redirects</li>
         </ul>
         
         <h2>Third-Party Services</h2>
-        <p>Detour does not integrate with any analytics services, tracking pixels, or third-party APIs. The extension operates entirely offline once installed.</p>
+        <p>Detour operates entirely offline with one exception:</p>
+        <ul>
+            <li>Optional license validation through LemonSqueezy API (only for supporters)</li>
+            <li>No analytics services, tracking pixels, or other third-party integrations</li>
+            <li>No data collection or telemetry</li>
+        </ul>
         
         <h2>Data Security</h2>
         <p>Your data is protected by:</p>
@@ -155,7 +173,14 @@
         </ul>
         
         <h2>License Information</h2>
-        <p>If you purchase a supporter license through LemonSqueezy, that transaction is handled entirely by LemonSqueezy according to their privacy policy. Detour only stores your license key locally for validation—we do not transmit or verify it against any external server.</p>
+        <p>If you purchase a supporter license through LemonSqueezy:</p>
+        <ul>
+            <li>The transaction is handled by LemonSqueezy according to their privacy policy</li>
+            <li>Your license key is stored locally and validated with LemonSqueezy's servers</li>
+            <li>Validation occurs on activation and periodically (every 24 hours) to ensure license validity</li>
+            <li>No other personal information is transmitted during validation</li>
+            <li>The extension remains fully functional without a license</li>
+        </ul>
         
         <h2>Changes to This Policy</h2>
         <p>We may update this privacy policy periodically. Any changes will be reflected on this page with an updated revision date. The extension will continue to operate under the same privacy principles: no data collection, no tracking, local-only operation.</p>
@@ -170,6 +195,5 @@
         <span class="copyright-text">© 2025 <a href="/" style="color: inherit; text-decoration: none;">Triglavis LLC</a>™</span>
         <a href="mailto:support@triglavis.com" class="copyright-contact">Contact</a>
     </div>
-    <script src="../canvas-grid.js"></script>
 </body>
 </html>
