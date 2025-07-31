@@ -26,3 +26,44 @@ yarn-error.log*
 Thumbs.db
 .Spotlight-V100
 .Trashes
+
+# Test and experimental files
+**/test-*.html
+**/test-*.js
+**/experimental/
+**/sandbox/
+*.backup.js
+*.test.js
+*.draft.*
+
+# Work in progress - use feature branches instead
+**/wip/
+**/tmp/
+**/temp/
+
+# Local development notes
+**/DEVELOPMENT_NOTES.md
+**/TODO.md
+**/NOTES.md
+
+# Multiple versions of same file
+*-v2.*
+*-v3.*
+*-copy.*
+*-old.*
+*-new.*
+*-fixed.*
+*-broken.*
+
+# IDE specific
+.idea/
+.vscode/
+*.code-workspace
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Claude specific
+.claude/settings.local.json
