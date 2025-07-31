@@ -156,6 +156,10 @@ body {
   opacity: 0.9;
 }
 
+.copyright-contact:hover {
+  text-decoration: underline;
+}
+
 @media (prefers-color-scheme: dark) {
   .copyright-contact {
     color: #fff;
