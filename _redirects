@@ -1,6 +1,6 @@
-# Redirect /detour and /detour/ to privacy policy
-/detour     /detour/privacy.html    301
-/detour/    /detour/privacy.html    301
+# Redirect /detour and /detour/ to landing page
+/detour     /detour/index.html    200
+/detour/    /detour/index.html    200
 
 # Serve custom 404 page for all not found routes
 /*    /404.html   404

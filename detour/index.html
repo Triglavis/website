@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Detour - Turn distractions into reading opportunities. A Chrome extension that redirects you from distracting websites to your reading list.">
+    <meta name="keywords" content="productivity, chrome extension, reading list, focus, digital wellness, habit building">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Detour - Build Better Browsing Habits">
+    <meta property="og:description" content="Turn distractions into reading opportunities with Detour, a privacy-first Chrome extension.">
+    <meta property="og:image" content="/detour/detour-icon.png">
+    <meta property="og:url" content="https://triglavis.com/detour">
+    <meta property="og:type" content="website">
+    
+    <title>Detour - Turn Distractions into Reading | Triglavis</title>
+    <link rel="icon" type="image/png" href="/detour/detour-icon.png">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/detour/detour-styles.css">
+    
+    <!-- Import Space Mono font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Fullscreen Car Game -->
+    <div id="carGameContainer" class="car-game-container">
+        <canvas id="carGameCanvas"></canvas>
+        
+        <!-- Story Overlay (hidden - using hero as background instead) -->
+        <div id="storyOverlay" class="story-overlay" style="display: none;">
+            <div class="story-content">
+                <p class="story-text" id="storyText">You saved an interesting article yesterday...</p>
+            </div>
+        </div>
+        
+        <div id="gameMessage" class="game-message"></div>
+        
+        <!-- Mobile Controls -->
+        <div id="mobileControls" class="mobile-controls">
+            <div class="steering-wheel-container">
+                <div id="steeringWheel" class="steering-wheel">
+                    <div class="steering-spoke"></div>
+                    <div class="steering-spoke"></div>
+                    <div class="steering-spoke"></div>
+                    <div class="steering-center">H</div>
+                </div>
+            </div>
+            <div class="pedals-container">
+                <button id="gasPedal" class="pedal gas-pedal">GAS</button>
+                <button id="brakePedal" class="pedal brake-pedal">BRAKE</button>
+            </div>
+        </div>
+        
+        <!-- Detour Power-up Button -->
+        <div id="detourPowerup" class="detour-powerup" style="display: none;">
+            <div class="powerup-content">
+                <img src="/detour/detour-icon.png" alt="Detour" class="powerup-icon">
+                <p class="powerup-text">Install Detour Mod?</p>
+                <button id="activateDetour" class="powerup-btn">ACTIVATE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section (visible from start as background) -->
+    <section class="hero">
+        <div class="container hero-content">
+            <div id="regularHero" class="regular-hero">
+                <img src="/detour/detour-icon.png" alt="Detour Logo" class="hero-logo">
+                <h1 class="hero-title">Detour</h1>
+                <p class="hero-tagline">Turn distractions into reading opportunities</p>
+                <div class="hero-actions">
+                    <a href="https://chrome.google.com/webstore/detail/detour/[YOUR-EXTENSION-ID]" class="btn btn-primary" target="_blank">
+                        <svg class="btn-icon" viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Add to Chrome
+                    </a>
+                    <a href="#support" class="btn btn-secondary">Support Detour</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Statement -->
+    <section class="problem">
+        <div class="container">
+            <h2>You meant to read that article.</h2>
+            <p class="problem-text">Then YouTube happened. <em>Again.</em></p>
+            <p class="problem-subtext">We've all been there. You save an interesting article to read later, but "later" never comes. Instead, you find yourself scrolling through the same distracting websites, wondering where your time went.</p>
+        </div>
+    </section>
+
+    <!-- Solution Showcase -->
+    <section class="solution">
+        <div class="container">
+            <h2>What if distractions became opportunities?</h2>
+            <div class="solution-demo">
+                <div class="demo-before">
+                    <span class="demo-label">Instead of this...</span>
+                    <div class="demo-screen demo-distraction">
+                        <div class="url-bar">youtube.com</div>
+                        <div class="demo-content">
+                            <div class="video-thumbnail"></div>
+                            <div class="video-thumbnail"></div>
+                            <div class="video-thumbnail"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="demo-arrow">→</div>
+                <div class="demo-after">
+                    <span class="demo-label">Read this</span>
+                    <div class="demo-screen demo-reading">
+                        <div class="url-bar">Your Reading List</div>
+                        <div class="demo-content">
+                            <div class="article-item">▪ The article you saved yesterday</div>
+                            <div class="article-item">▪ That interesting blog post</div>
+                            <div class="article-item">▪ The newsletter you subscribed to</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+        <div class="container">
+            <h2>Gentle nudges, not walls</h2>
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">📚</div>
+                    <h3>Daily Reading Goals</h3>
+                    <p>Set a simple goal. Track your progress. Build the habit.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔖</div>
+                    <h3>Works with Chrome</h3>
+                    <p>Integrates with Chrome's Reading List and your bookmarks.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3>You Choose the Sites</h3>
+                    <p>Block YouTube, Twitter, Reddit, or any site that distracts you.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <h3>See Your Progress</h3>
+                    <p>Visual feedback helps you stay motivated and on track.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🌓</div>
+                    <h3>Dark & Light Modes</h3>
+                    <p>Easy on the eyes, day or night. Follows your system preference.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Privacy First</h3>
+                    <p>No tracking. No data collection. Everything stays on your device.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2>How it works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Choose your distractions</h3>
+                    <p>Select which websites tend to pull you away from reading.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Set your daily goal</h3>
+                    <p>Start small. Even one article a day builds the habit.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Get gently redirected</h3>
+                    <p>When you visit a distraction, Detour guides you to your reading list.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Privacy Section -->
+    <section class="privacy-section">
+        <div class="container">
+            <h2>Your data stays yours</h2>
+            <div class="privacy-content">
+                <p>Detour operates entirely on your device. We don't collect any data, track your browsing, or phone home. Your reading habits are yours alone.</p>
+                <a href="/detour/privacy.html" class="privacy-link">Read our full privacy policy →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support Section -->
+    <section id="support" class="support">
+        <div class="container">
+            <h2>Support Detour</h2>
+            <div class="support-content">
+                <p>Detour is free and always will be. If it's helped you build better reading habits, consider supporting its development.</p>
+                <div class="support-options">
+                    <div class="support-option">
+                        <h3>Supporter License</h3>
+                        <p>Get a warm fuzzy feeling and our eternal gratitude.</p>
+                        <a href="https://detour.lemonsqueezy.com" class="btn btn-secondary" target="_blank">Buy us a coffee ☕</a>
+                    </div>
+                </div>
+                <p class="support-note">The extension remains fully functional without a license. This is just a way to say thanks!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="/triglavis.svg" alt="Triglavis" class="footer-logo">
+                    <p>Built by <a href="https://triglavis.com" target="_blank">Triglavis LLC</a></p>
+                </div>
+                <div class="footer-links">
+                    <a href="/detour/privacy.html">Privacy Policy</a>
+                    <a href="mailto:support@triglavis.com">Contact</a>
+                    <a href="https://github.com/triglavis/detour" target="_blank">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Copyright (inherits from main site) -->
+    <div class="copyright-container">
+        <span class="copyright-text">© 2025 <a href="/" style="color: inherit; text-decoration: none;">Triglavis LLC</a>™</span>
+        <div style="display: flex; gap: 0.75rem;">
+            <a href="/privacy.html" class="copyright-contact">Privacy Policy</a>
+            <a href="mailto:support@triglavis.com" class="copyright-contact">Contact</a>
+        </div>
+    </div>
+
+    <!-- Three.js for 3D rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    
+    <!-- Game and animations scripts -->
+    <script src="/detour/car-game-mac-3d.js"></script>
+    <script src="/detour/detour-animations.js"></script>
+</body>
+</html>
