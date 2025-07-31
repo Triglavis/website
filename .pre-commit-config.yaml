@@ -1,0 +1,64 @@
+# Pre-commit hooks to prevent accidental commits
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  # Check for files that shouldn't be committed
+  - repo: local
+    hooks:
+      - id: check-experimental-files
+        name: Block experimental/test files
+        entry: 'Experimental files detected! Use feature branches for tests'
+        language: fail
+        files: '(test-.*\.(html|js)|experimental/|sandbox/|\.backup\.js|DEVELOPMENT_NOTES\.md)'
+        
+      - id: check-branch-name
+        name: Enforce branch naming
+        entry: bash -c 'BRANCH=$(git rev-parse --abbrev-ref HEAD); [[ "$BRANCH" =~ ^(main|feature/|bugfix/|hotfix/|release/) ]] || (echo "Branch name must start with feature/, bugfix/, hotfix/, or release/" && exit 1)'
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # Standard checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-json
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+
+  # Check commit messages
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # JavaScript/HTML validation
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.56.0
+    hooks:
+      - id: eslint
+        files: \.(js|jsx)$
+        types: [file]
+        args: ['--fix']
+        additional_dependencies:
+          - eslint@8.56.0
+
+  # HTML validation
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
+    hooks:
+      - id: remove-tabs
+        exclude: Makefile
+      - id: forbid-tabs
+        exclude: Makefile
+
+# Configuration for commitizen
+# Valid commit types: feat, fix, docs, style, refactor, test, chore

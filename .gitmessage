@@ -1,0 +1,23 @@
+# <type>: <subject> (50 chars)
+
+# <body> (72 chars per line)
+
+# <footer>
+
+# Type can be:
+#   feat:     new feature
+#   fix:      bug fix
+#   docs:     documentation only
+#   style:    formatting, missing semicolons, etc
+#   refactor: code change that neither fixes a bug nor adds a feature
+#   test:     adding missing tests
+#   chore:    maintain
+
+# Example:
+# feat: add privacy policy page
+# 
+# - Create comprehensive privacy policy
+# - Add footer links to all pages
+# - Include SMS consent for Twilio
+# 
+# Closes #123
