@@ -1,0 +1,935 @@
+/* Detour Landing Page Styles */
+
+/* Base overrides for landing page */
+body {
+    user-select: auto;
+    -webkit-user-select: auto;
+    -moz-user-select: auto;
+    -ms-user-select: auto;
+    overflow-x: hidden;
+    display: block !important;
+    align-items: unset !important;
+    justify-content: unset !important;
+}
+
+/* Lock scrolling when game is active */
+body.game-active {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+/* Section spacing */
+section {
+    padding: 4rem 0;
+}
+
+@media (max-width: 768px) {
+    section {
+        padding: 2.5rem 0;
+    }
+}
+
+/* Container override for content sections */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Hero Section */
+.hero {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100dvw;
+    height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 1;
+    background: hsl(var(--background));
+}
+
+/* When game is inactive, hero scrolls normally */
+body:not(.game-active) .hero {
+    position: relative;
+    min-height: 100dvh;
+}
+
+/* Make hero non-interactive when game is active */
+.car-game-container ~ .hero {
+    pointer-events: none;
+}
+
+/* Make hero content subtle while game is playing */
+.car-game-container ~ .hero .hero-content {
+    opacity: 0.3;
+    transition: opacity 0.5s ease;
+}
+
+/* Re-enable interaction when game is hidden */
+.car-game-container[style*="display: none"] ~ .hero {
+    pointer-events: auto;
+}
+
+.car-game-container[style*="display: none"] ~ .hero .hero-content {
+    opacity: 1;
+}
+
+.hero-content {
+    animation: fadeIn 0.8s ease-out;
+}
+
+.hero-logo {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.hero-title {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 4rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.hero-tagline {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.25rem;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 2rem;
+    opacity: 0.8;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 400;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+}
+
+.btn-secondary:hover {
+    background: hsl(var(--muted));
+}
+
+.btn-icon {
+    fill: currentColor;
+}
+
+/* Hero Animation */
+.hero-animation {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.redirect-arrow {
+    display: inline-block;
+    font-size: 2rem;
+    opacity: 0.3;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Problem Section */
+.problem {
+    text-align: center;
+    background: hsl(var(--muted));
+}
+
+.problem h2 {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+}
+
+.problem-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.problem-text em {
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.problem-subtext {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto;
+    opacity: 0.8;
+}
+
+/* Solution Section */
+.solution {
+    text-align: center;
+}
+
+.solution h2 {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    margin-bottom: 3rem;
+}
+
+.solution-demo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.demo-before,
+.demo-after {
+    flex: 1;
+    min-width: 280px;
+    max-width: 400px;
+}
+
+.demo-label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.demo-screen {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.url-bar {
+    background: hsl(var(--muted));
+    padding: 0.75rem 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    border-bottom: 1px solid hsl(var(--border));
+}
+
+.demo-content {
+    padding: 1.5rem;
+    min-height: 200px;
+}
+
+.video-thumbnail {
+    background: hsl(var(--muted));
+    height: 40px;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+}
+
+.article-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    text-align: left;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.demo-arrow {
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+/* Features Section */
+.features {
+    background: hsl(var(--muted));
+}
+
+.features h2 {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.feature {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.feature h3 {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 750;
+    margin-bottom: 0.5rem;
+}
+
+.feature p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    opacity: 0.8;
+}
+
+/* How it Works Section */
+.how-it-works h2 {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.step {
+    text-align: center;
+    position: relative;
+}
+
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
+    border-radius: 50%;
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 750;
+    margin-bottom: 1rem;
+}
+
+.step h3 {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 750;
+    margin-bottom: 0.5rem;
+}
+
+.step p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    opacity: 0.8;
+}
+
+/* Privacy Section */
+.privacy-section {
+    background: hsl(var(--muted));
+    text-align: center;
+}
+
+.privacy-section h2 {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+}
+
+.privacy-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.privacy-content p {
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.privacy-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    color: hsl(var(--foreground));
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.privacy-link:hover {
+    opacity: 1;
+}
+
+/* Support Section */
+.support {
+    text-align: center;
+}
+
+.support h2 {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+}
+
+.support-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.support-content > p {
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.support-option {
+    background: hsl(var(--muted));
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.support-option h3 {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 750;
+    margin-bottom: 0.5rem;
+}
+
+.support-option p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.8;
+}
+
+.support-note {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Footer */
+.footer {
+    background: hsl(var(--muted));
+    padding: 3rem 0 1rem;
+    margin-top: 4rem;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.footer-logo {
+    width: 30px;
+    height: 30px;
+    opacity: 0.6;
+}
+
+.footer-brand p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.footer-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.footer-links a {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    color: hsl(var(--foreground));
+    text-decoration: none;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.footer-links a:hover {
+    opacity: 1;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 3rem;
+    }
+    
+    .hero-tagline {
+        font-size: 1.1rem;
+    }
+    
+    .problem h2,
+    .solution h2,
+    .features h2,
+    .how-it-works h2,
+    .privacy-section h2,
+    .support h2 {
+        font-size: 2rem;
+    }
+    
+    .solution-demo {
+        flex-direction: column;
+    }
+    
+    .demo-arrow {
+        transform: rotate(90deg);
+    }
+    
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-logo {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .steps {
+        gap: 2rem;
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .hero-logo {
+        filter: drop-shadow(0 4px 6px rgba(255, 255, 255, 0.1));
+    }
+    
+    .demo-screen {
+        box-shadow: 0 4px 6px rgba(255, 255, 255, 0.05);
+    }
+    
+    .footer-logo {
+        filter: invert(1);
+    }
+}
+
+/* Animation utilities */
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease-out;
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Car Game Styles */
+.car-game-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100dvw;
+    height: 100dvh;
+    z-index: 1000;
+    background: transparent;
+    pointer-events: none;
+}
+
+.car-game-container canvas,
+.car-game-container .game-controls,
+.car-game-container .mobile-controls,
+.car-game-container .detour-powerup {
+    pointer-events: auto;
+}
+
+#carGameCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    background: transparent;
+}
+
+.game-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 750;
+    text-align: center;
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    display: none;
+    transition: opacity 0.5s ease;
+    z-index: 10;
+}
+
+.game-controls {
+    position: absolute;
+    top: 30px;
+    right: 10px;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 5;
+}
+
+.control-btn {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+    background: hsl(var(--muted));
+    transform: translateY(-1px);
+}
+
+/* Mobile Controls */
+.mobile-controls {
+    display: none;
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    padding: 0 10px;
+    pointer-events: auto;
+    z-index: 5;
+}
+
+@media (max-width: 768px) and (hover: none) {
+    .mobile-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+}
+
+.steering-wheel-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.steering-wheel {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background: hsl(var(--foreground));
+    border-radius: 50%;
+    border: 8px solid hsl(var(--background));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.1s ease;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.steering-wheel.active {
+    cursor: grabbing;
+}
+
+.steering-spoke {
+    position: absolute;
+    width: 4px;
+    height: 40%;
+    background: hsl(var(--background));
+    left: 50%;
+    top: 50%;
+    transform-origin: center bottom;
+}
+
+.steering-spoke:nth-child(1) {
+    transform: translate(-50%, -100%) rotate(0deg);
+}
+
+.steering-spoke:nth-child(2) {
+    transform: translate(-50%, -100%) rotate(120deg);
+}
+
+.steering-spoke:nth-child(3) {
+    transform: translate(-50%, -100%) rotate(240deg);
+}
+
+.steering-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    background: hsl(var(--background));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-weight: 750;
+    font-size: 14px;
+    color: hsl(var(--foreground));
+    cursor: pointer;
+}
+
+.steering-center:active {
+    transform: translate(-50%, -50%) scale(0.9);
+}
+
+.pedals-container {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.pedal {
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-weight: bold;
+    font-size: 0.8rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.1s ease;
+    touch-action: manipulation;
+}
+
+.gas-pedal {
+    background: #48BB78;
+    color: white;
+}
+
+.gas-pedal:active {
+    background: #38A169;
+    transform: translateY(2px);
+}
+
+.brake-pedal {
+    background: #F56565;
+    color: white;
+}
+
+.brake-pedal:active {
+    background: #E53E3E;
+    transform: translateY(2px);
+}
+
+/* Regular hero content */
+.regular-hero {
+    animation: fadeIn 0.8s ease-out;
+}
+
+/* Story Overlay */
+.story-overlay {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    max-width: 600px;
+    text-align: center;
+    z-index: 10;
+    transition: opacity 0.5s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+    .story-overlay {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+}
+
+.story-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    color: white;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Detour Power-up */
+.detour-powerup {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: hsl(var(--background));
+    border: 2px solid hsl(var(--foreground));
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 20;
+    animation: powerupBounce 2s ease-in-out infinite;
+}
+
+@keyframes powerupBounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-10px); }
+}
+
+.powerup-content {
+    text-align: center;
+}
+
+.powerup-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 0.5rem;
+}
+
+.powerup-text {
+    font-family: 'Söhne Breit', 'Inter', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 750;
+    margin-bottom: 1rem;
+}
+
+.powerup-btn {
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 6px;
+    font-family: 'Space Mono', monospace;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.powerup-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Star Mode Effect */
+.star-mode #carGameCanvas {
+    animation: starMode 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes starMode {
+    0% { filter: hue-rotate(0deg) brightness(1.2); }
+    100% { filter: hue-rotate(180deg) brightness(1.4); }
+}
+
+/* Dark mode adjustments for game */
+@media (prefers-color-scheme: dark) {
+    .steering-wheel {
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+    }
+    
+    .detour-powerup {
+        box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1);
+    }
+}
