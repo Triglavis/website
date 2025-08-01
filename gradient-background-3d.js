@@ -151,36 +151,50 @@
       return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0) - radius;
     }
 
-    // 2D SDF for Triglavis logo shape
+    // 2D SDF for Triglavis logo shape (based on actual SVG path)
     float sdTriglavisLogo2D(vec2 p) {
-      // Scale to match logo proportions
-      p *= 2.5;
+      // Scale and center properly
+      p *= 1.8;
+      p.y += 0.1; // Adjust center
       
-      // Normalize coordinates based on SVG viewBox (296x303)
-      float aspect = 296.0 / 303.0;
-      p.x *= aspect;
+      // Main base - large rounded rectangle at bottom
+      vec2 basePos = p - vec2(0.0, -0.4);
+      float base = sdRoundedRect(basePos, vec2(1.0, 0.25), 0.12);
       
-      // Flip Y to match SVG coordinate system
-      p.y = -p.y;
+      // Left arm - tall rounded rectangle
+      vec2 leftArmPos = p - vec2(-0.8, 0.0);
+      float leftArm = sdRoundedRect(leftArmPos, vec2(0.18, 0.6), 0.08);
       
-      // Main body - large rounded rectangle at top
-      vec2 bodyPos = p - vec2(0.0, 0.25);
-      float body = sdRoundedRect(bodyPos, vec2(0.8, 0.35), 0.15);
+      // Right arm - tall rounded rectangle  
+      vec2 rightArmPos = p - vec2(0.8, 0.0);
+      float rightArm = sdRoundedRect(rightArmPos, vec2(0.18, 0.6), 0.08);
       
-      // Left finger
-      vec2 leftFingerPos = p - vec2(-0.65, -0.35);
-      float leftFinger = sdRoundedRect(leftFingerPos, vec2(0.15, 0.35), 0.1);
+      // Center T-shape body
+      vec2 tBodyPos = p - vec2(0.0, 0.15);
+      float tBody = sdRoundedRect(tBodyPos, vec2(0.12, 0.35), 0.06);
       
-      // Center triangle/diamond
-      vec2 centerPos = p - vec2(0.0, -0.45);
-      float centerDiamond = abs(centerPos.x) + abs(centerPos.y) * 0.7 - 0.15;
+      // T-shape horizontal bar (top part)
+      vec2 tBarPos = p - vec2(0.0, 0.4);
+      float tBar = sdRoundedRect(tBarPos, vec2(0.35, 0.08), 0.04);
       
-      // Right finger
-      vec2 rightFingerPos = p - vec2(0.65, -0.35);
-      float rightFinger = sdRoundedRect(rightFingerPos, vec2(0.15, 0.35), 0.1);
+      // T-shape curved connections (approximate with small rectangles)
+      vec2 leftConnPos = p - vec2(-0.25, 0.25);
+      float leftConn = sdRoundedRect(leftConnPos, vec2(0.08, 0.15), 0.04);
+      
+      vec2 rightConnPos = p - vec2(0.25, 0.25);
+      float rightConn = sdRoundedRect(rightConnPos, vec2(0.08, 0.15), 0.04);
+      
+      // Top diamond/arrow shape
+      vec2 diamondPos = p - vec2(0.0, 0.65);
+      float diamond = abs(diamondPos.x) + abs(diamondPos.y) * 1.5 - 0.08;
+      
+      // Combine the T-shape parts
+      float tShape = min(tBody, min(tBar, min(leftConn, rightConn)));
       
       // Combine all parts
-      float logo = min(body, min(leftFinger, min(centerDiamond, rightFinger)));
+      float arms = min(leftArm, rightArm);
+      float centerParts = min(tShape, diamond);
+      float logo = min(base, min(arms, centerParts));
       
       return logo;
     }
