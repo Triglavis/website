@@ -385,9 +385,12 @@
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateDarkMode);
     }
     
-    handleResize();
-    console.log('Gradient background initialized successfully');
-    animate();
+    // Initial resize after DOM settles
+    setTimeout(() => {
+      handleResize();
+      console.log('Gradient background initialized successfully');
+      animate();
+    }, 100);
   }
 
   function handleMouseMove(e) {
@@ -396,17 +399,38 @@
   }
 
   function handleResize() {
+    if (!canvas || !gl) return;
+    
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    canvas.style.width = window.innerWidth + 'px';
-    canvas.style.height = window.innerHeight + 'px';
+    const rect = canvas.getBoundingClientRect();
+    
+    // Check if we got valid dimensions
+    if (rect.width === 0 || rect.height === 0) {
+      console.warn('Canvas has zero dimensions, retrying...');
+      setTimeout(handleResize, 100);
+      return;
+    }
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
     
     gl.viewport(0, 0, canvas.width, canvas.height);
+    console.log('Canvas resized:', rect.width, 'x', rect.height);
   }
 
   function animate() {
+    if (!gl || !program || !canvas) {
+      console.error('WebGL context lost or not initialized');
+      return;
+    }
+    
     const currentTime = (Date.now() - startTime) * 0.001;
+    
+    // Clear with transparent
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     
     gl.useProgram(program);
     
