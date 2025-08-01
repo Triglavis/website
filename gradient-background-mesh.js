@@ -505,6 +505,10 @@
     varying vec3 v_normal;
     varying vec3 v_worldPosition;
     
+    #define FXAA_REDUCE_MIN (1.0/128.0)
+    #define FXAA_REDUCE_MUL (1.0/8.0)
+    #define FXAA_SPAN_MAX 8.0
+    
     // Anti-aliasing function for smooth edges
     float aastep(float threshold, float value) {
       #ifdef GL_OES_standard_derivatives
@@ -573,28 +577,39 @@
       vec3 lightDir = normalize(u_lightPosition - v_worldPosition);
       vec3 viewDir = normalize(u_viewPosition - v_worldPosition);
       
+      // Calculate screen-space derivatives for edge detection
+      #ifdef GL_OES_standard_derivatives
+        vec3 fdx = dFdx(v_worldPosition);
+        vec3 fdy = dFdy(v_worldPosition);
+        float edgeDetect = length(fdx) + length(fdy);
+        
+        // Use edge detection for alpha blending
+        float edgeAlpha = 1.0 - smoothstep(0.0, 0.01, edgeDetect);
+        edgeAlpha = mix(0.95, 1.0, edgeAlpha); // Subtle edge transparency
+      #else
+        float edgeAlpha = 1.0;
+      #endif
+      
       // Simple bright white base
       vec3 baseColor = vec3(1.0, 1.0, 1.0);
       
       // Very subtle shading to maintain form
       float NdotL = max(dot(normal, lightDir), 0.0);
-      float shading = mix(0.95, 1.0, NdotL); // Very subtle shading
+      float shading = mix(0.98, 1.0, NdotL); // Even more subtle
       
-      // Extremely subtle fresnel for edge definition
+      // Soft edge glow based on viewing angle
       float NdotV = max(dot(normal, viewDir), 0.0);
-      float fresnel = pow(1.0 - NdotV, 3.0) * 0.05; // Very subtle
+      float edgeFactor = 1.0 - NdotV;
+      float edgeGlow = pow(edgeFactor, 4.0) * 0.03; // Very soft edge glow
       
       // Bright white with minimal variation
-      vec3 finalColor = baseColor * shading + fresnel;
-      
-      // Add extremely subtle glow effect
-      float glowIntensity = 0.02; // Very subtle
-      finalColor += glowIntensity;
+      vec3 finalColor = baseColor * shading + edgeGlow;
       
       // Ensure we stay bright white
-      finalColor = clamp(finalColor, vec3(0.95), vec3(1.0));
+      finalColor = clamp(finalColor, vec3(0.98), vec3(1.0));
       
-      gl_FragColor = vec4(finalColor, 1.0);
+      // Apply edge alpha for anti-aliasing
+      gl_FragColor = vec4(finalColor, edgeAlpha);
     }
   `;
 
@@ -663,9 +678,42 @@
         offset += 2; // Skip attribute count
       }
       
+      // Post-process: smooth normals for better anti-aliasing
+      const smoothedNormals = new Float32Array(normals.length);
+      
+      // Average normals for shared vertices
+      for (let i = 0; i < vertices.length; i += 3) {
+        let sumX = 0, sumY = 0, sumZ = 0;
+        let count = 0;
+        
+        const vx = vertices[i];
+        const vy = vertices[i + 1];
+        const vz = vertices[i + 2];
+        
+        // Find all vertices at the same position
+        for (let j = 0; j < vertices.length; j += 3) {
+          const dx = vertices[j] - vx;
+          const dy = vertices[j + 1] - vy;
+          const dz = vertices[j + 2] - vz;
+          
+          if (dx * dx + dy * dy + dz * dz < 0.0001) { // Same vertex
+            sumX += normals[j];
+            sumY += normals[j + 1];
+            sumZ += normals[j + 2];
+            count++;
+          }
+        }
+        
+        // Normalize the averaged normal
+        const len = Math.sqrt(sumX * sumX + sumY * sumY + sumZ * sumZ);
+        smoothedNormals[i] = sumX / len;
+        smoothedNormals[i + 1] = sumY / len;
+        smoothedNormals[i + 2] = sumZ / len;
+      }
+      
       return {
         vertices: new Float32Array(vertices),
-        normals: new Float32Array(normals),
+        normals: smoothedNormals,
         indices: new Uint16Array(indices),
         numTriangles
       };
@@ -701,11 +749,19 @@
     // Enable depth testing and anti-aliasing features
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.polygonOffset(1.0, 1.0);
     
     // Set better depth function for smoother edges
     gl.depthFunc(gl.LEQUAL);
+    
+    // Enable sample coverage for MSAA
+    if (gl.getParameter(gl.SAMPLES) > 1) {
+      gl.enable(gl.SAMPLE_COVERAGE);
+      gl.sampleCoverage(1.0, false);
+    }
     
     // Load STL
     logoMesh = await loadSTL();
@@ -835,7 +891,7 @@
     if (!canvas || !gl) return;
     
     // Use higher DPR for better anti-aliasing on high-DPI displays
-    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for performance
+    const dpr = window.devicePixelRatio || 1; // Use full device pixel ratio
     const rect = canvas.getBoundingClientRect();
     
     if (rect.width === 0 || rect.height === 0) {
@@ -843,8 +899,8 @@
       return;
     }
     
-    // Use supersampling for smoother edges
-    const supersample = 1.5;
+    // Use aggressive supersampling for smoother edges
+    const supersample = 2.0; // Doubled from 1.5
     canvas.width = rect.width * dpr * supersample;
     canvas.height = rect.height * dpr * supersample;
     canvas.style.width = rect.width + 'px';
