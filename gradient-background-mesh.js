@@ -101,6 +101,8 @@
     uniform bool isDarkMode;
     uniform vec2 touchPoints[${MAX_TOUCH_POINTS}];
     uniform int touchCount;
+    uniform vec3 logoPosition;
+    uniform vec3 logoScale;
 
     #define BLEND_MODE 2
     #define SPEED 2.0
@@ -273,9 +275,41 @@
       return smoke;
     }
 
+    // Check if point is inside logo bounds
+    float getLogoDistance(vec2 p) {
+      // Convert to logo space
+      vec2 logoSpaceP = p / logoScale.xy;
+      
+      // Simple rectangular bounds for logo (will be refined)
+      vec2 logoSize = vec2(0.8, 1.0);
+      vec2 d = abs(logoSpaceP) - logoSize;
+      float dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+      
+      return dist;
+    }
+    
+    // Calculate logo repulsion for fluid dynamics
+    vec2 calculateLogoRepulsion(vec2 p) {
+      float logoDist = getLogoDistance(p);
+      float logoForce = exp(-logoDist * 8.0) * 1.2;
+      
+      // Calculate gradient for repulsion direction
+      vec2 e = vec2(0.001, 0.0);
+      vec2 grad = vec2(
+        getLogoDistance(p + e.xy) - getLogoDistance(p - e.xy),
+        getLogoDistance(p + e.yx) - getLogoDistance(p - e.yx)
+      );
+      vec2 logoDir = normalize(grad + vec2(0.001));
+      
+      return logoDir * logoForce;
+    }
+    
     vec2 warp(vec2 p) {
       vec2 repulsion = calculateRepulsion(p);
-      p += repulsion * 0.15;
+      vec2 logoRepulsion = calculateLogoRepulsion(p);
+      
+      // Combine repulsions
+      p += repulsion * 0.15 + logoRepulsion * 0.3;
       
       float n1 = noise(p * waveNoiseScale1 + vec2(iTime * waveNoiseSpeed1, 0.0));
       float n2 = noise(p * waveNoiseScale1 + vec2(0.0, iTime * waveNoiseSpeed2));
@@ -367,8 +401,16 @@
       // Apply warping with enhanced repulsion
       vec2 warpedUv = warp(centeredUv);
       
-      // Add smoke influence to warping
-      warpedUv += smoke * 0.08;
+      // Modify smoke flow based on logo collision
+      float logoDist = getLogoDistance(centeredUv);
+      float logoInfluence = exp(-logoDist * 5.0);
+      
+      // Create swirling effect around logo
+      float swirlAngle = atan(centeredUv.y, centeredUv.x) + logoDist * 2.0 + iTime * 0.5;
+      vec2 swirlFlow = vec2(cos(swirlAngle), sin(swirlAngle)) * logoInfluence * 0.1;
+      
+      // Add smoke influence to warping with logo flow
+      warpedUv += smoke * 0.08 * (1.0 - logoInfluence * 0.5) + swirlFlow;
       
       float simplexNoise = snoise(vec3(warpedUv * noiseScale, iTime * noiseSpeed)) * noiseIntensity;
       warpedUv += simplexNoise;
@@ -531,18 +573,26 @@
       vec3 lightDir = normalize(u_lightPosition - v_worldPosition);
       vec3 viewDir = normalize(u_viewPosition - v_worldPosition);
       
-      // Calculate enhanced lighting
-      vec3 litColor = calculateLighting(normal, viewDir, lightDir);
+      // Simple bright white base
+      vec3 baseColor = vec3(1.0, 1.0, 1.0);
       
-      // Ambient contribution with smoothing
-      vec3 ambient = u_materialColor * 0.15;
+      // Very subtle shading to maintain form
+      float NdotL = max(dot(normal, lightDir), 0.0);
+      float shading = mix(0.95, 1.0, NdotL); // Very subtle shading
       
-      // Final color with anti-aliased blending
-      vec3 finalColor = ambient + litColor;
+      // Extremely subtle fresnel for edge definition
+      float NdotV = max(dot(normal, viewDir), 0.0);
+      float fresnel = pow(1.0 - NdotV, 3.0) * 0.05; // Very subtle
       
-      // Tone mapping for smoother gradation
-      finalColor = finalColor / (finalColor + vec3(1.0));
-      finalColor = pow(finalColor, vec3(1.0/2.2)); // Gamma correction
+      // Bright white with minimal variation
+      vec3 finalColor = baseColor * shading + fresnel;
+      
+      // Add extremely subtle glow effect
+      float glowIntensity = 0.02; // Very subtle
+      finalColor += glowIntensity;
+      
+      // Ensure we stay bright white
+      finalColor = clamp(finalColor, vec3(0.95), vec3(1.0));
       
       gl_FragColor = vec4(finalColor, 1.0);
     }
@@ -696,7 +746,9 @@
       waveNoiseSpeed3: gl.getUniformLocation(bgProgram, 'waveNoiseSpeed3'),
       isDarkMode: gl.getUniformLocation(bgProgram, 'isDarkMode'),
       touchPoints: gl.getUniformLocation(bgProgram, 'touchPoints'),
-      touchCount: gl.getUniformLocation(bgProgram, 'touchCount')
+      touchCount: gl.getUniformLocation(bgProgram, 'touchCount'),
+      logoPosition: gl.getUniformLocation(bgProgram, 'logoPosition'),
+      logoScale: gl.getUniformLocation(bgProgram, 'logoScale')
     };
     
     // Setup logo uniforms
@@ -844,6 +896,10 @@
     gl.uniform2fv(bgUniforms.touchPoints, touchArray);
     gl.uniform1i(bgUniforms.touchCount, touchPoints.length);
     
+    // Pass logo information for collision detection
+    gl.uniform3f(bgUniforms.logoPosition, 0.0, 0.0, 0.0);
+    gl.uniform3f(bgUniforms.logoScale, 0.15, 0.15, 0.15);
+    
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     
     // Render 3D logo
@@ -876,9 +932,9 @@
     gl.uniform3f(logoUniforms.lightPosition, 3.0, 3.0, 5.0);
     gl.uniform3f(logoUniforms.viewPosition, 0.0, 0.0, 3.0);
     gl.uniform3f(logoUniforms.lightColor, 1.0, 1.0, 1.0);
-    gl.uniform3f(logoUniforms.materialColor, 0.95, 0.93, 0.91);
-    gl.uniform1f(logoUniforms.metallic, 0.7);
-    gl.uniform1f(logoUniforms.roughness, 0.15);
+    gl.uniform3f(logoUniforms.materialColor, 1.0, 1.0, 1.0); // Bright white
+    gl.uniform1f(logoUniforms.metallic, 0.0); // Non-metallic for pure white
+    gl.uniform1f(logoUniforms.roughness, 0.0); // Smooth surface
     gl.uniform3f(logoUniforms.resolution, canvas.width, canvas.height, 1.0);
     
     // Bind logo attributes
