@@ -173,12 +173,12 @@ body {
 /* Gradient Canvas Styles */
 .gradient-canvas {
   position: fixed;
-  top: 29px;
-  left: 29px;
-  right: 29px;
-  bottom: 29px;
-  width: calc(100% - 58px);
-  height: calc(100% - 58px);
+  top: 9px;
+  left: 9px;
+  right: 9px;
+  bottom: 9px;
+  width: calc(100% - 18px);
+  height: calc(100% - 18px);
   z-index: -1;
   pointer-events: none;
   background: transparent;
@@ -188,12 +188,12 @@ body {
 /* Canvas Grid Styles */
 .pixel-canvas {
   position: fixed;
-  top: 29px;
-  left: 29px;
-  right: 29px;
-  bottom: 29px;
-  width: calc(100% - 58px);
-  height: calc(100% - 58px);
+  top: 9px;
+  left: 9px;
+  right: 9px;
+  bottom: 9px;
+  width: calc(100% - 18px);
+  height: calc(100% - 18px);
   z-index: 0;
   pointer-events: auto;
   background: transparent;
@@ -202,37 +202,36 @@ body {
 
 @media (max-width: 768px) {
   .gradient-canvas {
-    top: 19px;
-    left: 19px;
-    right: 19px;
-    bottom: 19px;
-    width: calc(100% - 38px);
-    height: calc(100% - 38px);
+    top: 9px;
+    left: 9px;
+    right: 9px;
+    bottom: 9px;
+    width: calc(100% - 18px);
+    height: calc(100% - 18px);
   }
   
   .pixel-canvas {
-    top: 19px;
-    left: 19px;
-    right: 19px;
-    bottom: 19px;
-    width: calc(100% - 38px);
-    height: calc(100% - 38px);
+    top: 9px;
+    left: 9px;
+    right: 9px;
+    bottom: 9px;
+    width: calc(100% - 18px);
+    height: calc(100% - 18px);
   }
 }
 
 /* Visual container with border radius */
 .visual-container {
   position: fixed;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  bottom: 20px;
+  top: 9px;
+  left: 9px;
+  right: 9px;
+  bottom: 9px;
   border-radius: 9px;
   overflow: hidden;
   pointer-events: none;
   z-index: 50;
   background: #000;
-  padding: 9px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -241,37 +240,7 @@ body {
   }
 }
 
-.visual-container::before {
-  content: '';
-  position: absolute;
-  top: 9px;
-  left: 9px;
-  right: 9px;
-  bottom: 9px;
-  border-radius: 9px;
-  overflow: hidden;
-  background: transparent;
-  z-index: -1;
-}
 
-@media (max-width: 768px) {
-  .visual-container {
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    border-radius: 9px;
-    padding: 9px;
-  }
-  
-  .visual-container::before {
-    top: 9px;
-    left: 9px;
-    right: 9px;
-    bottom: 9px;
-    border-radius: 9px;
-  }
-}
 
 /* Ensure logo stays on top */
 .container {
