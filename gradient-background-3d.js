@@ -151,51 +151,49 @@
       return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0) - radius;
     }
 
-    // 2D SDF for Triglavis logo shape (based on exact SVG path analysis)
+    // Simple approach: use the same logo that's already working in the HTML
+    // Just create a 2D mask that matches the visible logo position and extrude it
     float sdTriglavisLogo2D(vec2 p) {
-      // Normalize to SVG coordinate space (296x303 viewBox)
-      // Convert from centered (-1,1) to SVG coordinates
-      vec2 svgP = vec2((p.x + 1.0) * 148.0 + 48.0, (-p.y + 1.0) * 151.5 + 48.0);
+      // The HTML logo is centered and has a specific size
+      // Let's create a simple approximation that matches what we see
       
-      // Scale factor for SDF operations
-      float scale = 200.0;
+      // Scale to match the visible logo size (roughly)
+      p *= 3.0;
       
-      // Top rounded rectangle (coordinates: 48-248 x, 48-100 y)
-      vec2 topPos = (svgP - vec2(148.0, 74.0)) / scale;
-      float topRect = sdRoundedRect(topPos, vec2(100.0/scale, 26.0/scale), 15.0/scale);
+      // Recreate the basic shape we can see in the screenshot:
+      // Top horizontal bar
+      vec2 topBar = p - vec2(0.0, 0.4);
+      float top = sdRoundedRect(topBar, vec2(0.6, 0.08), 0.04);
       
-      // Left rounded rectangle (coordinates: 48-98 x, 163-255 y) 
-      vec2 leftPos = (svgP - vec2(73.0, 209.0)) / scale;
-      float leftRect = sdRoundedRect(leftPos, vec2(25.0/scale, 46.0/scale), 8.0/scale);
+      // Left pillar  
+      vec2 leftPillar = p - vec2(-0.45, -0.1);
+      float left = sdRoundedRect(leftPillar, vec2(0.08, 0.4), 0.04);
       
-      // Right rounded rectangle (coordinates: 198-248 x, 163-255 y)
-      vec2 rightPos = (svgP - vec2(223.0, 209.0)) / scale;
-      float rightRect = sdRoundedRect(rightPos, vec2(25.0/scale, 46.0/scale), 8.0/scale);
-      
-      // Center triangle/diamond (coordinates around 124-172 x, 206-255 y)
-      vec2 centerPos = (svgP - vec2(148.0, 241.0)) / scale;
-      // Create diamond shape using rotated square
-      float centerDiamond = length(max(abs(mat2(0.707, -0.707, 0.707, 0.707) * centerPos) - vec2(12.0/scale), 0.0));
-      
-      // Vertical connectors between top and sides (approximated)
-      vec2 leftConnPos = (svgP - vec2(98.0, 131.0)) / scale;
-      float leftConn = sdRoundedRect(leftConnPos, vec2(8.0/scale, 30.0/scale), 4.0/scale);
-      
-      vec2 rightConnPos = (svgP - vec2(198.0, 131.0)) / scale;
-      float rightConn = sdRoundedRect(rightConnPos, vec2(8.0/scale, 30.0/scale), 4.0/scale);
+      // Right pillar
+      vec2 rightPillar = p - vec2(0.45, -0.1);
+      float right = sdRoundedRect(rightPillar, vec2(0.08, 0.4), 0.04);
       
       // Center vertical stem
-      vec2 stemPos = (svgP - vec2(148.0, 175.0)) / scale;
-      float stem = sdRoundedRect(stemPos, vec2(6.0/scale, 50.0/scale), 3.0/scale);
+      vec2 centerStem = p - vec2(0.0, 0.0);
+      float center = sdRoundedRect(centerStem, vec2(0.06, 0.3), 0.03);
       
-      // Combine all elements
-      float sideRects = min(leftRect, rightRect);
-      float connections = min(leftConn, rightConn);
-      float centerElements = min(centerDiamond, stem);
+      // Bottom triangle/diamond
+      vec2 diamond = p - vec2(0.0, -0.45);
+      float bottomShape = abs(diamond.x) + abs(diamond.y) * 1.2 - 0.08;
       
-      float logo = min(topRect, min(sideRects, min(connections, centerElements)));
+      // T-bar connections (the curved parts)
+      vec2 leftConn = p - vec2(-0.25, 0.25);
+      float leftConnection = sdRoundedRect(leftConn, vec2(0.04, 0.08), 0.02);
       
-      return logo;
+      vec2 rightConn = p - vec2(0.25, 0.25);
+      float rightConnection = sdRoundedRect(rightConn, vec2(0.04, 0.08), 0.02);
+      
+      // Combine all parts
+      float pillars = min(left, right);
+      float connections = min(leftConnection, rightConnection);
+      float centerParts = min(center, bottomShape);
+      
+      return min(top, min(pillars, min(connections, centerParts)));
     }
     
     // 3D SDF for extruded Triglavis logo
