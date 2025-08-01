@@ -9,22 +9,31 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <canvas class="pixel-canvas" id="pixelCanvas"></canvas>
-    <main class="container">
-        <div class="content">
-            <picture class="logo-wrapper" id="logoWrapper">
-                <source srcset="triglavis_dark.svg" media="(prefers-color-scheme: dark)">
-                <img src="triglavis.svg" alt="Triglavis Logo" class="logo">
-            </picture>
+    <div class="app-container">
+        <div class="content-area">
+            <canvas class="gradient-canvas" id="gradientCanvas"></canvas>
+            <canvas class="pixel-canvas" id="pixelCanvas"></canvas>
+            <main class="container">
+                <div class="content">
+                    <picture class="logo-wrapper" id="logoWrapper">
+                        <img src="triglavis_dark.svg" alt="Triglavis Logo" class="logo">
+                    </picture>
+                </div>
+            </main>
         </div>
-    </main>
-    <div class="copyright-container">
-        <span class="copyright-text">© 2025 <a href="/" style="color: inherit; text-decoration: none;">Triglavis LLC</a>™</span>
-        <div style="display: flex; gap: 9px;">
-            <a href="/privacy.html" class="copyright-contact">Privacy Policy</a>
-            <a href="mailto:support@triglavis.com" class="copyright-contact">Contact</a>
+        <div class="chin-area">
+            <div class="copyright-container">
+                <div class="copyright-left">
+                    <span class="copyright-text">© 2025 <a href="/" style="color: inherit; text-decoration: none;">Triglavis LLC</a>™</span>
+                </div>
+                <div class="copyright-right">
+                    <a href="/privacy.html" class="copyright-contact">Privacy Policy</a>
+                    <a href="mailto:support@triglavis.com" class="copyright-contact">Contact</a>
+                </div>
+            </div>
         </div>
     </div>
+    <script src="gradient-background.js"></script>
     <script src="canvas-grid.js"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4741e2cbd24343ff8a9688436ea53d68"}'></script>
