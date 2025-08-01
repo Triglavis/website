@@ -170,74 +170,53 @@ body {
   }
 }
 
+/* Border container - creates the black/white border */
+.border-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000;
+  border-radius: 4.5px;
+  padding: 4.5px;
+  z-index: -2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .border-container {
+    background: #fff;
+  }
+}
+
 /* Gradient Canvas Styles */
 .gradient-canvas {
   position: fixed;
-  top: 9px;
-  left: 9px;
-  right: 9px;
-  bottom: 9px;
-  width: calc(100% - 18px);
-  height: calc(100% - 18px);
+  top: 4.5px;
+  left: 4.5px;
+  right: 4.5px;
+  bottom: 4.5px;
+  width: calc(100% - 9px);
+  height: calc(100% - 9px);
   z-index: -1;
   pointer-events: none;
   background: transparent;
-  border-radius: 9px;
+  border-radius: 4.5px;
 }
 
 /* Canvas Grid Styles */
 .pixel-canvas {
   position: fixed;
-  top: 9px;
-  left: 9px;
-  right: 9px;
-  bottom: 9px;
-  width: calc(100% - 18px);
-  height: calc(100% - 18px);
+  top: 4.5px;
+  left: 4.5px;
+  right: 4.5px;
+  bottom: 4.5px;
+  width: calc(100% - 9px);
+  height: calc(100% - 9px);
   z-index: 0;
   pointer-events: auto;
   background: transparent;
-  border-radius: 9px;
-}
-
-@media (max-width: 768px) {
-  .gradient-canvas {
-    top: 9px;
-    left: 9px;
-    right: 9px;
-    bottom: 9px;
-    width: calc(100% - 18px);
-    height: calc(100% - 18px);
-  }
-  
-  .pixel-canvas {
-    top: 9px;
-    left: 9px;
-    right: 9px;
-    bottom: 9px;
-    width: calc(100% - 18px);
-    height: calc(100% - 18px);
-  }
-}
-
-/* Visual container with border radius */
-.visual-container {
-  position: fixed;
-  top: 9px;
-  left: 9px;
-  right: 9px;
-  bottom: 9px;
-  border-radius: 9px;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 50;
-  background: #000;
-}
-
-@media (prefers-color-scheme: dark) {
-  .visual-container {
-    background: #fff;
-  }
+  border-radius: 4.5px;
 }
 
 
