@@ -151,74 +151,13 @@
       return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0) - radius;
     }
 
-    // Simple approach: use the same logo that's already working in the HTML
-    // Just create a 2D mask that matches the visible logo position and extrude it
-    float sdTriglavisLogo2D(vec2 p) {
-      // The HTML logo is centered and has a specific size
-      // Let's create a simple approximation that matches what we see
-      
-      // Scale to match the visible logo size (roughly)
-      p *= 3.0;
-      
-      // Recreate the basic shape we can see in the screenshot:
-      // Top horizontal bar
-      vec2 topBar = p - vec2(0.0, 0.4);
-      float top = sdRoundedRect(topBar, vec2(0.6, 0.08), 0.04);
-      
-      // Left pillar  
-      vec2 leftPillar = p - vec2(-0.45, -0.1);
-      float left = sdRoundedRect(leftPillar, vec2(0.08, 0.4), 0.04);
-      
-      // Right pillar
-      vec2 rightPillar = p - vec2(0.45, -0.1);
-      float right = sdRoundedRect(rightPillar, vec2(0.08, 0.4), 0.04);
-      
-      // Center vertical stem
-      vec2 centerStem = p - vec2(0.0, 0.0);
-      float center = sdRoundedRect(centerStem, vec2(0.06, 0.3), 0.03);
-      
-      // Bottom triangle/diamond
-      vec2 diamond = p - vec2(0.0, -0.45);
-      float bottomShape = abs(diamond.x) + abs(diamond.y) * 1.2 - 0.08;
-      
-      // T-bar connections (the curved parts)
-      vec2 leftConn = p - vec2(-0.25, 0.25);
-      float leftConnection = sdRoundedRect(leftConn, vec2(0.04, 0.08), 0.02);
-      
-      vec2 rightConn = p - vec2(0.25, 0.25);
-      float rightConnection = sdRoundedRect(rightConn, vec2(0.04, 0.08), 0.02);
-      
-      // Combine all parts
-      float pillars = min(left, right);
-      float connections = min(leftConnection, rightConnection);
-      float centerParts = min(center, bottomShape);
-      
-      return min(top, min(pillars, min(connections, centerParts)));
-    }
-    
-    // 3D SDF for extruded Triglavis logo
-    float sdTriglavisLogo3D(vec3 p) {
-      // Extrude the 2D shape along Z axis
-      float depth = 0.15; // Extrusion depth
-      
-      // Get 2D distance
-      float d2d = sdTriglavisLogo2D(p.xy);
-      
-      // Extrude along Z with rounded edges
-      float dz = abs(p.z) - depth;
-      
-      // Combine 2D and Z distances for extrusion
-      return max(d2d, dz);
-    }
-    
-    // Calculate normal for 3D SDF
-    vec3 calcNormal(vec3 p) {
-      vec2 e = vec2(0.001, 0.0);
-      return normalize(vec3(
-        sdTriglavisLogo3D(p + e.xyy) - sdTriglavisLogo3D(p - e.xyy),
-        sdTriglavisLogo3D(p + e.yxy) - sdTriglavisLogo3D(p - e.yxy),
-        sdTriglavisLogo3D(p + e.yyx) - sdTriglavisLogo3D(p - e.yyx)
-      ));
+    // Since you provided the STL, let's just use the 2D logo with depth illusion
+    // The HTML img already shows the perfect logo, we'll add 3D effect to background
+    float getLogoMask(vec2 p) {
+      // This will be used to detect where the HTML logo is positioned
+      // and create a depth effect in that area
+      float logoSize = 0.15; // Approximate size of the HTML logo
+      return 1.0 - smoothstep(logoSize, logoSize + 0.05, length(p));
     }
 
     // 3D rotation matrix
@@ -383,43 +322,6 @@
       return overlay(color, grain, w);
     }
 
-    // Ray marching function
-    float rayMarch(vec3 ro, vec3 rd) {
-      float t = 0.0;
-      for (int i = 0; i < 64; i++) {
-        vec3 p = ro + rd * t;
-        float d = sdTriglavisLogo3D(p);
-        if (d < 0.001 || t > 5.0) break;
-        t += d * 0.8;
-      }
-      return t;
-    }
-    
-    // Soft shadow calculation
-    float softShadow(vec3 ro, vec3 rd, float mint, float maxt) {
-      float res = 1.0;
-      float t = mint;
-      for (int i = 0; i < 16; i++) {
-        float h = sdTriglavisLogo3D(ro + rd * t);
-        res = min(res, 8.0 * h / t);
-        t += clamp(h, 0.02, 0.1);
-        if (h < 0.001 || t > maxt) break;
-      }
-      return clamp(res, 0.0, 1.0);
-    }
-    
-    // Ambient occlusion
-    float ambientOcclusion(vec3 p, vec3 n) {
-      float occ = 0.0;
-      float sca = 1.0;
-      for (int i = 0; i < 5; i++) {
-        float h = 0.01 + 0.11 * float(i) / 4.0;
-        float d = sdTriglavisLogo3D(p + h * n);
-        occ += (h - d) * sca;
-        sca *= 0.95;
-      }
-      return clamp(1.0 - 2.0 * occ, 0.0, 1.0);
-    }
 
     void main() {
       vec2 fragCoord = gl_FragCoord.xy;
@@ -429,17 +331,15 @@
       // Apply warping with repulsion
       vec2 warpedUv = warp(centeredUv);
       
-      // Setup camera for 3D ray marching
-      vec3 ro = vec3(0.0, 0.0, 2.0); // Camera position
-      vec3 rd = normalize(vec3(centeredUv, -1.0)); // Ray direction
+      // Get logo mask (where the HTML logo is positioned)
+      float logoMask = getLogoMask(centeredUv);
       
-      // Ray march to find logo intersection
-      float t = rayMarch(ro, rd);
-      vec3 pos = ro + rd * t;
-      
-      // Calculate gradient background
+      // Calculate gradient background with liquid smoke
       float smoke = liquidSmoke(warpedUv, iTime);
       float simplexNoise = snoise(vec3(warpedUv * noiseScale, iTime * noiseSpeed)) * noiseIntensity;
+      
+      // Make smoke avoid the logo area to create depth illusion
+      smoke *= (1.0 - logoMask * 0.8);
       warpedUv += simplexNoise + smoke * 0.05;
       
       // Wave generation
@@ -456,69 +356,21 @@
       float breathing = sin(iTime * 0.5) * 0.1 + 0.9;
       float combinedWave = (wave1 + wave2 + wave3 + parabolicArch) * breathing * 0.3;
       
+      // Reduce wave intensity in logo area to suggest depth
+      combinedWave *= (1.0 - logoMask * 0.5);
+      
       float gradientPos = (uv.y + combinedWave * 0.3);
       float smoothGradientPos = smoothstep(0.0, 1.0, clamp(1.0 - gradientPos, 0.0, 1.0));
-      vec3 bgColor = multiColorGradient(smoothGradientPos);
+      vec3 color = multiColorGradient(smoothGradientPos);
       
-      // Check if we hit the logo
-      if (t < 5.0) {
-        // Calculate normal and lighting
-        vec3 normal = calcNormal(pos);
-        
-        // Lighting setup
-        vec3 lightPos = vec3(2.0, 3.0, 4.0);
-        vec3 lightDir = normalize(lightPos - pos);
-        vec3 viewDir = normalize(ro - pos);
-        vec3 halfDir = normalize(lightDir + viewDir);
-        
-        // Material properties
-        vec3 albedo = vec3(0.95, 0.93, 0.91); // Slightly off-white
-        float metallic = 0.7;
-        float roughness = 0.3;
-        
-        // Diffuse lighting
-        float NdotL = max(dot(normal, lightDir), 0.0);
-        vec3 diffuse = albedo * NdotL;
-        
-        // Specular lighting (Blinn-Phong approximation)
-        float NdotH = max(dot(normal, halfDir), 0.0);
-        float specular = pow(NdotH, 32.0) * (1.0 - roughness);
-        
-        // Fresnel effect
-        float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 2.0);
-        
-        // Ambient occlusion
-        float ao = ambientOcclusion(pos, normal);
-        
-        // Shadows
-        vec3 shadowOrigin = pos + normal * 0.002;
-        float shadow = softShadow(shadowOrigin, lightDir, 0.02, 3.0);
-        
-        // Environment reflection (fake)
-        vec3 reflectDir = reflect(-viewDir, normal);
-        vec3 envColor = bgColor * 0.5;
-        
-        // Combine lighting
-        vec3 color = vec3(0.0);
-        color += diffuse * shadow * 0.7;
-        color += specular * shadow * metallic;
-        color += envColor * fresnel * metallic;
-        color += albedo * 0.1 * ao; // Ambient
-        
-        // Blend with background based on depth
-        float fogFactor = exp(-t * 0.3);
-        color = mix(bgColor, color, fogFactor);
-        
-        // Add rim lighting
-        float rim = 1.0 - max(dot(normal, viewDir), 0.0);
-        rim = pow(rim, 3.0);
-        color += rim * 0.3 * vec3(1.0, 0.98, 0.95);
-        
-        gl_FragColor = vec4(applyGrain(color, uv), 1.0);
-      } else {
-        // No intersection, show background
-        gl_FragColor = vec4(applyGrain(bgColor, uv), 1.0);
-      }
+      // Create subtle depth effect behind logo area
+      vec3 depthColor = color * (1.0 - logoMask * 0.1);
+      
+      // Add subtle shadow/depth around logo
+      float logoShadow = logoMask * 0.15;
+      depthColor = mix(depthColor, depthColor * 0.8, logoShadow);
+      
+      gl_FragColor = vec4(applyGrain(depthColor, uv), 1.0);
     }
   `;
 
