@@ -14,7 +14,7 @@
   `;
 
   const fragmentShaderSource = `
-    precision highp float;
+    precision mediump float;
     
     uniform vec3 iResolution;
     uniform float iTime;
@@ -147,39 +147,60 @@
 
     vec3 overlay(vec3 a, vec3 b, float w) {
       vec3 result;
-      for (int i = 0; i < 3; i++) {
-        if (a[i] < 0.5) {
-          result[i] = 2.0 * a[i] * b[i];
-        } else {
-          result[i] = 1.0 - 2.0 * (1.0 - a[i]) * (1.0 - b[i]);
-        }
+      
+      // Red channel
+      if (a.r < 0.5) {
+        result.r = 2.0 * a.r * b.r;
+      } else {
+        result.r = 1.0 - 2.0 * (1.0 - a.r) * (1.0 - b.r);
       }
+      
+      // Green channel
+      if (a.g < 0.5) {
+        result.g = 2.0 * a.g * b.g;
+      } else {
+        result.g = 1.0 - 2.0 * (1.0 - a.g) * (1.0 - b.g);
+      }
+      
+      // Blue channel
+      if (a.b < 0.5) {
+        result.b = 2.0 * a.b * b.b;
+      } else {
+        result.b = 1.0 - 2.0 * (1.0 - a.b) * (1.0 - b.b);
+      }
+      
       return mix(a, result, w);
     }
 
     vec3 multiColorGradient(float t) {
-      float greyValues[7];
-      greyValues[0] = 0.908; // FAD4FB -> light grey
-      greyValues[1] = 0.847; // FAC8E1 -> medium light grey  
-      greyValues[2] = 0.761; // FAB615 -> medium grey
-      greyValues[3] = 0.541; // FC681E -> darker grey
-      greyValues[4] = 0.322; // 0D5DF4 -> medium dark grey
-      greyValues[5] = 0.267; // 0B4ABB -> dark grey
-      greyValues[6] = 0.055; // 170E07 -> very dark grey
-      
       t = clamp(t, 0.0, 1.0);
       
-      float scaledT = t * 6.0;
-      int index = int(floor(scaledT));
-      float localT = fract(scaledT);
+      // Define gradient stops
+      float g0 = 0.908; // FAD4FB -> light grey
+      float g1 = 0.847; // FAC8E1 -> medium light grey  
+      float g2 = 0.761; // FAB615 -> medium grey
+      float g3 = 0.541; // FC681E -> darker grey
+      float g4 = 0.322; // 0D5DF4 -> medium dark grey
+      float g5 = 0.267; // 0B4ABB -> dark grey
+      float g6 = 0.055; // 170E07 -> very dark grey
       
-      if (index >= 6) {
-        float grey = greyValues[6];
-        return vec3(grey, grey, grey);
+      float scaledT = t * 6.0;
+      float grey;
+      
+      if (scaledT < 1.0) {
+        grey = mix(g0, g1, smoothstep(0.0, 1.0, scaledT));
+      } else if (scaledT < 2.0) {
+        grey = mix(g1, g2, smoothstep(0.0, 1.0, scaledT - 1.0));
+      } else if (scaledT < 3.0) {
+        grey = mix(g2, g3, smoothstep(0.0, 1.0, scaledT - 2.0));
+      } else if (scaledT < 4.0) {
+        grey = mix(g3, g4, smoothstep(0.0, 1.0, scaledT - 3.0));
+      } else if (scaledT < 5.0) {
+        grey = mix(g4, g5, smoothstep(0.0, 1.0, scaledT - 4.0));
+      } else {
+        grey = mix(g5, g6, smoothstep(0.0, 1.0, scaledT - 5.0));
       }
       
-      float smoothT = smoothstep(0.0, 1.0, localT);
-      float grey = mix(greyValues[index], greyValues[index + 1], smoothT);
       return vec3(grey, grey, grey);
     }
 
@@ -262,7 +283,13 @@
   }
 
   function init() {
+    console.log('Gradient background initializing...');
     canvas = document.getElementById('gradientCanvas');
+    if (!canvas) {
+      console.error('Gradient canvas element not found');
+      return;
+    }
+    
     gl = canvas.getContext('webgl', { 
       alpha: true,
       antialias: false,
@@ -271,6 +298,8 @@
     
     if (!gl) {
       console.error('WebGL not supported');
+      // Fallback to a simple gradient
+      canvas.style.background = 'linear-gradient(to bottom, #e6e6e6, #333333)';
       return;
     }
     
@@ -278,7 +307,12 @@
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
     
-    if (!vertexShader || !fragmentShader) return;
+    if (!vertexShader || !fragmentShader) {
+      console.error('Failed to create shaders');
+      // Fallback to CSS gradient
+      canvas.style.background = 'linear-gradient(to bottom, #e6e6e6, #333333)';
+      return;
+    }
     
     // Create program
     program = createProgram(gl, vertexShader, fragmentShader);
@@ -325,6 +359,7 @@
     window.addEventListener('resize', handleResize);
     
     handleResize();
+    console.log('Gradient background initialized successfully');
     animate();
   }
 
