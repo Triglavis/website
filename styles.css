@@ -129,12 +129,27 @@ body {
 /* Copyright text */
 .copyright-container {
   position: fixed;
-  bottom: 9px;
-  right: 9px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 9px;
+  z-index: 100;
+  background: transparent;
+}
+
+.copyright-left {
+  display: flex;
+  align-items: center;
+}
+
+.copyright-right {
   display: flex;
   align-items: center;
   gap: 9px;
-  z-index: 100;
 }
 
 .copyright-text {
@@ -206,7 +221,7 @@ body {
   top: 4.5px;
   left: 4.5px;
   width: calc(100dvw - 9px);
-  height: calc(100dvh - 9px);
+  height: calc(100dvh - 34.5px); /* 30px chin + 4.5px bottom border */
   z-index: -1;
   pointer-events: none;
   background: transparent;
@@ -219,7 +234,7 @@ body {
   top: 4.5px;
   left: 4.5px;
   width: calc(100dvw - 9px);
-  height: calc(100dvh - 9px);
+  height: calc(100dvh - 34.5px); /* 30px chin + 4.5px bottom border */
   z-index: 0;
   pointer-events: auto;
   background: transparent;
