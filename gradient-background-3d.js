@@ -139,21 +139,42 @@
       return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
     }
 
+    // Helper function for rounded rectangle SDF
+    float sdRoundedRect(vec2 p, vec2 size, float radius) {
+      vec2 d = abs(p) - size + radius;
+      return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
+    }
+
     // SDF for Triglavis logo shape
     float sdTriglavisLogo(vec2 p) {
-      // Scale and center the logo
-      p *= 3.0;
+      // Scale to match logo proportions
+      p *= 2.5;
       
-      // Main rounded rectangle body
-      float body = length(max(abs(p) - vec2(0.6, 0.8), 0.0)) - 0.2;
+      // Normalize coordinates based on SVG viewBox (296x303)
+      float aspect = 296.0 / 303.0;
+      p.x *= aspect;
       
-      // Three rounded rectangles for the "fingers"
-      float finger1 = length(max(abs(p - vec2(-0.4, -0.9)) - vec2(0.15, 0.3), 0.0)) - 0.1;
-      float finger2 = length(max(abs(p - vec2(0.0, -0.9)) - vec2(0.15, 0.3), 0.0)) - 0.1;
-      float finger3 = length(max(abs(p - vec2(0.4, -0.9)) - vec2(0.15, 0.3), 0.0)) - 0.1;
+      // Flip Y to match SVG coordinate system
+      p.y = -p.y;
       
-      // Combine shapes
-      float logo = min(body, min(finger1, min(finger2, finger3)));
+      // Main body - large rounded rectangle at top
+      vec2 bodyPos = p - vec2(0.0, 0.25);
+      float body = sdRoundedRect(bodyPos, vec2(0.8, 0.35), 0.15);
+      
+      // Left finger
+      vec2 leftFingerPos = p - vec2(-0.65, -0.35);
+      float leftFinger = sdRoundedRect(leftFingerPos, vec2(0.15, 0.35), 0.1);
+      
+      // Center triangle/diamond
+      vec2 centerPos = p - vec2(0.0, -0.45);
+      float centerDiamond = abs(centerPos.x) + abs(centerPos.y) * 0.7 - 0.15;
+      
+      // Right finger
+      vec2 rightFingerPos = p - vec2(0.65, -0.35);
+      float rightFinger = sdRoundedRect(rightFingerPos, vec2(0.15, 0.35), 0.1);
+      
+      // Combine all parts
+      float logo = min(body, min(leftFinger, min(centerDiamond, rightFinger)));
       
       return logo;
     }
@@ -176,7 +197,11 @@
       vec2 totalForce = vec2(0.0);
       
       // Add mouse repulsion
-      vec2 mousePos = (iMouse - 0.5) * 2.0;
+      // Convert mouse coordinates to centered UV space matching the shader coordinates
+      vec2 mousePos = vec2(iMouse.x - 0.5, iMouse.y - 0.5) * 2.0;
+      // Adjust for aspect ratio
+      mousePos.x *= iResolution.x / iResolution.y;
+      
       float mouseDist = length(p - mousePos);
       float mouseForce = exp(-mouseDist * 3.0) * 0.3;
       vec2 mouseDir = normalize(p - mousePos + vec2(0.001)); // avoid division by zero
@@ -185,7 +210,9 @@
       // Add touch point repulsions
       for (int i = 0; i < ${MAX_TOUCH_POINTS}; i++) {
         if (i >= touchCount) break;
-        vec2 touchPos = (touchPoints[i] - 0.5) * 2.0;
+        vec2 touchPos = vec2(touchPoints[i].x - 0.5, touchPoints[i].y - 0.5) * 2.0;
+        touchPos.x *= iResolution.x / iResolution.y;
+        
         float touchDist = length(p - touchPos);
         float touchForce = exp(-touchDist * 3.0) * 0.3;
         vec2 touchDir = normalize(p - touchPos + vec2(0.001));
