@@ -5,7 +5,7 @@
   let startTime = Date.now();
   let animationId = null;
   let mouseX = 0.5, mouseY = 0.5;
-  let isDarkMode = false;
+  let isDarkMode = true; // Always use dark mode
 
   const vertexShaderSource = `
     attribute vec2 a_position;
@@ -375,15 +375,8 @@
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('resize', handleResize);
     
-    // Dark mode detection
-    function updateDarkMode() {
-      isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    
-    updateDarkMode();
-    if (window.matchMedia) {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateDarkMode);
-    }
+    // Always use dark mode
+    isDarkMode = true;
     
     // Initial resize after DOM settles
     setTimeout(() => {
