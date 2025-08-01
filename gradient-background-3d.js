@@ -349,17 +349,16 @@
       // Apply warping with repulsion
       vec2 warpedUv = warp(centeredUv);
       
-      // 3D rotation for logo
-      float rotY = iTime * 0.2;
-      float rotX = sin(iTime * 0.15) * 0.3;
+      // Static 3D transformation for logo
+      float rotY = 0.0; // No rotation
+      float rotX = 0.0; // No tilt
       
-      // Transform UV for 3D effect
+      // Transform UV for 3D effect (kept for potential future use)
       vec3 p3d = vec3(centeredUv, 0.0);
-      p3d = rotateY(rotY) * p3d;
-      p3d = rotateX(rotX) * p3d;
+      // No rotation applied - object remains stationary
       
-      // Project back to 2D with perspective
-      vec2 logoUv = p3d.xy / (1.0 + p3d.z * 0.3);
+      // Use original UV without transformation
+      vec2 logoUv = centeredUv;
       
       // Calculate logo SDF
       float logoSdf = sdTriglavisLogo(logoUv);
@@ -368,7 +367,7 @@
       // Liquid smoke interaction with logo
       float smoke = liquidSmoke(warpedUv, iTime);
       float logoInfluence = exp(-abs(logoSdf) * 5.0);
-      smoke += logoInfluence * sin(iTime * 2.0) * 0.3;
+      smoke += logoInfluence * 0.3; // Static influence without time-based animation
       
       // Apply smoke to warping
       warpedUv += smoke * 0.05 * (1.0 - logoMask * 0.5);
