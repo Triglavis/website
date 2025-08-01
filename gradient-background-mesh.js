@@ -203,29 +203,74 @@
       return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
     }
 
+    // Enhanced interaction with visual feedback
     vec2 calculateRepulsion(vec2 p) {
       vec2 totalForce = vec2(0.0);
       
+      // Mouse repulsion with enhanced effect
       vec2 mousePos = vec2(iMouse.x - 0.5, iMouse.y - 0.5) * 2.0;
       mousePos.x *= iResolution.x / iResolution.y;
       
       float mouseDist = length(p - mousePos);
-      float mouseForce = exp(-mouseDist * 3.0) * 0.3;
+      // Stronger, more visible repulsion
+      float mouseForce = exp(-mouseDist * 2.0) * 0.8;
+      // Add pulsing effect for visibility
+      mouseForce *= (1.0 + sin(iTime * 8.0) * 0.3);
       vec2 mouseDir = normalize(p - mousePos + vec2(0.001));
       totalForce += mouseDir * mouseForce;
       
+      // Touch point repulsion with enhanced effects
       for (int i = 0; i < ${MAX_TOUCH_POINTS}; i++) {
         if (i >= touchCount) break;
         vec2 touchPos = vec2(touchPoints[i].x - 0.5, touchPoints[i].y - 0.5) * 2.0;
         touchPos.x *= iResolution.x / iResolution.y;
         
         float touchDist = length(p - touchPos);
-        float touchForce = exp(-touchDist * 3.0) * 0.3;
+        // Stronger touch repulsion
+        float touchForce = exp(-touchDist * 1.8) * 0.9;
+        // Add ripple effect from touch points
+        touchForce *= (1.0 + sin(touchDist * 10.0 - iTime * 6.0) * 0.4);
         vec2 touchDir = normalize(p - touchPos + vec2(0.001));
         totalForce += touchDir * touchForce;
       }
       
       return totalForce;
+    }
+    
+    // Enhanced liquid smoke simulation
+    float liquidSmoke(vec2 p, float time) {
+      // Multi-layered smoke with different scales
+      vec2 flow1 = vec2(
+        snoise(vec3(p * 1.5, time * 0.3)),
+        snoise(vec3(p * 1.5 + 100.0, time * 0.3))
+      );
+      
+      vec2 flow2 = vec2(
+        snoise(vec3(p * 3.0, time * 0.5)),
+        snoise(vec3(p * 3.0 + 200.0, time * 0.5))
+      );
+      
+      vec2 flow3 = vec2(
+        snoise(vec3(p * 6.0, time * 0.7)),
+        snoise(vec3(p * 6.0 + 300.0, time * 0.7))
+      );
+      
+      // Combine flows for complex motion
+      vec2 combinedFlow = flow1 * 0.5 + flow2 * 0.3 + flow3 * 0.2;
+      p += combinedFlow * 0.15;
+      
+      float smoke = 0.0;
+      float amplitude = 0.6;
+      float frequency = 1.5;
+      
+      // Multiple octaves for detailed smoke
+      for (int i = 0; i < 6; i++) {
+        smoke += snoise(vec3(p * frequency, time * 0.4)) * amplitude;
+        frequency *= 2.2;
+        amplitude *= 0.35;
+      }
+      
+      return smoke;
     }
 
     vec2 warp(vec2 p) {
@@ -311,28 +356,68 @@
       vec2 uv = fragCoord / iResolution.xy;
       vec2 centeredUv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;
       
+      // Calculate interaction zones for visual feedback
+      vec2 mousePos = vec2(iMouse.x - 0.5, iMouse.y - 0.5) * 2.0;
+      mousePos.x *= iResolution.x / iResolution.y;
+      float mouseDist = length(centeredUv - mousePos);
+      
+      // Enhanced smoke simulation with interaction
+      float smoke = liquidSmoke(centeredUv, iTime);
+      
+      // Apply warping with enhanced repulsion
       vec2 warpedUv = warp(centeredUv);
+      
+      // Add smoke influence to warping
+      warpedUv += smoke * 0.08;
       
       float simplexNoise = snoise(vec3(warpedUv * noiseScale, iTime * noiseSpeed)) * noiseIntensity;
       warpedUv += simplexNoise;
       
+      // Enhanced wave generation with interaction feedback
       float phase1 = iTime * 0.6;
       float phase2 = iTime * 0.4;
       
       float distanceFromCenter = length(warpedUv);
       float archFactor = 1.0 - distanceFromCenter * 0.5;
 
+      // Add interaction ripples to waves
+      float interactionRipple = exp(-mouseDist * 4.0) * sin(mouseDist * 15.0 - iTime * 8.0) * 0.1;
+      
       float wave1 = sin(warpedUv.x * 3.0 + phase1) * 0.5 * archFactor;
       float wave2 = sin(warpedUv.x * 5.0 - phase2) * 0.3 * archFactor;
       float wave3 = sin(warpedUv.y * 4.0 + phase1 * 0.7) * 0.15;
       float parabolicArch = -pow(warpedUv.x, 2.0) * 0.2;
 
       float breathing = sin(iTime * 0.5) * 0.1 + 0.9;
-      float combinedWave = (wave1 + wave2 + wave3 + parabolicArch) * breathing * 0.3;
+      float combinedWave = (wave1 + wave2 + wave3 + parabolicArch + interactionRipple) * breathing * 0.3;
+      
+      // Add touch ripples for multiple touch points
+      for (int i = 0; i < ${MAX_TOUCH_POINTS}; i++) {
+        if (i >= touchCount) break;
+        vec2 touchPos = vec2(touchPoints[i].x - 0.5, touchPoints[i].y - 0.5) * 2.0;
+        touchPos.x *= iResolution.x / iResolution.y;
+        float touchDist = length(centeredUv - touchPos);
+        float touchRipple = exp(-touchDist * 3.0) * sin(touchDist * 12.0 - iTime * 10.0) * 0.08;
+        combinedWave += touchRipple;
+      }
       
       float gradientPos = (uv.y + combinedWave * 0.3);
       float smoothGradientPos = smoothstep(0.0, 1.0, clamp(1.0 - gradientPos, 0.0, 1.0));
       vec3 color = multiColorGradient(smoothGradientPos);
+      
+      // Add visual feedback for interaction zones
+      float interactionGlow = exp(-mouseDist * 6.0) * 0.15 * (1.0 + sin(iTime * 12.0) * 0.5);
+      color += interactionGlow * vec3(1.0, 0.95, 0.9);
+      
+      // Add touch point glows
+      for (int i = 0; i < ${MAX_TOUCH_POINTS}; i++) {
+        if (i >= touchCount) break;
+        vec2 touchPos = vec2(touchPoints[i].x - 0.5, touchPoints[i].y - 0.5) * 2.0;
+        touchPos.x *= iResolution.x / iResolution.y;
+        float touchDist = length(centeredUv - touchPos);
+        float touchGlow = exp(-touchDist * 5.0) * 0.2 * (1.0 + sin(iTime * 15.0) * 0.6);
+        color += touchGlow * vec3(0.9, 1.0, 0.95);
+      }
       
       gl_FragColor = vec4(applyGrain(color, uv), 1.0);
     }
