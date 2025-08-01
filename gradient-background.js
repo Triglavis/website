@@ -5,6 +5,7 @@
   let startTime = Date.now();
   let animationId = null;
   let mouseX = 0.5, mouseY = 0.5;
+  let isDarkMode = false;
 
   const vertexShaderSource = `
     attribute vec2 a_position;
@@ -29,6 +30,7 @@
     uniform float waveNoiseSpeed1;
     uniform float waveNoiseSpeed2;
     uniform float waveNoiseSpeed3;
+    uniform bool isDarkMode;
 
     #define BLEND_MODE 2
     #define SPEED 2.0
@@ -175,14 +177,28 @@
     vec3 multiColorGradient(float t) {
       t = clamp(t, 0.0, 1.0);
       
-      // Define gradient stops
-      float g0 = 0.908; // FAD4FB -> light grey
-      float g1 = 0.847; // FAC8E1 -> medium light grey  
-      float g2 = 0.761; // FAB615 -> medium grey
-      float g3 = 0.541; // FC681E -> darker grey
-      float g4 = 0.322; // 0D5DF4 -> medium dark grey
-      float g5 = 0.267; // 0B4ABB -> dark grey
-      float g6 = 0.055; // 170E07 -> very dark grey
+      // Define gradient stops for light and dark modes
+      float g0, g1, g2, g3, g4, g5, g6;
+      
+      if (isDarkMode) {
+        // Dark mode - inverted/shifted down colors
+        g0 = 0.092; // Inverted light grey -> very dark grey
+        g1 = 0.153; // Inverted medium light grey -> dark grey
+        g2 = 0.239; // Inverted medium grey -> darker grey
+        g3 = 0.459; // Inverted darker grey -> medium grey
+        g4 = 0.678; // Inverted medium dark grey -> lighter grey
+        g5 = 0.733; // Inverted dark grey -> light grey
+        g6 = 0.945; // Inverted very dark grey -> very light grey
+      } else {
+        // Light mode - original colors
+        g0 = 0.908; // FAD4FB -> light grey
+        g1 = 0.847; // FAC8E1 -> medium light grey  
+        g2 = 0.761; // FAB615 -> medium grey
+        g3 = 0.541; // FC681E -> darker grey
+        g4 = 0.322; // 0D5DF4 -> medium dark grey
+        g5 = 0.267; // 0B4ABB -> dark grey
+        g6 = 0.055; // 170E07 -> very dark grey
+      }
       
       float scaledT = t * 6.0;
       float grey;
@@ -334,7 +350,8 @@
       waveNoiseScale3: gl.getUniformLocation(program, 'waveNoiseScale3'),
       waveNoiseSpeed1: gl.getUniformLocation(program, 'waveNoiseSpeed1'),
       waveNoiseSpeed2: gl.getUniformLocation(program, 'waveNoiseSpeed2'),
-      waveNoiseSpeed3: gl.getUniformLocation(program, 'waveNoiseSpeed3')
+      waveNoiseSpeed3: gl.getUniformLocation(program, 'waveNoiseSpeed3'),
+      isDarkMode: gl.getUniformLocation(program, 'isDarkMode')
     };
     
     // Create position buffer
@@ -357,6 +374,16 @@
     // Mouse tracking
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('resize', handleResize);
+    
+    // Dark mode detection
+    function updateDarkMode() {
+      isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    
+    updateDarkMode();
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateDarkMode);
+    }
     
     handleResize();
     console.log('Gradient background initialized successfully');
@@ -387,6 +414,7 @@
     gl.uniform3f(uniforms.iResolution, canvas.width, canvas.height, 1);
     gl.uniform1f(uniforms.iTime, currentTime);
     gl.uniform2f(uniforms.iMouse, mouseX, mouseY);
+    gl.uniform1i(uniforms.isDarkMode, isDarkMode ? 1 : 0);
     
     // Noise parameters (slowed down)
     gl.uniform1f(uniforms.noiseIntensity, 1.55);
