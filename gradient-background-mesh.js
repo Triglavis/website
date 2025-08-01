@@ -363,7 +363,8 @@
   `;
 
   const logoFragmentShaderSource = `
-    precision mediump float;
+    #extension GL_OES_standard_derivatives : enable
+    precision highp float;
     
     uniform vec3 u_lightPosition;
     uniform vec3 u_viewPosition;
@@ -371,34 +372,94 @@
     uniform vec3 u_materialColor;
     uniform float u_metallic;
     uniform float u_roughness;
+    uniform vec3 u_resolution;
     
     varying vec3 v_position;
     varying vec3 v_normal;
     varying vec3 v_worldPosition;
     
-    void main() {
-      vec3 normal = normalize(v_normal);
-      vec3 lightDir = normalize(u_lightPosition - v_worldPosition);
-      vec3 viewDir = normalize(u_viewPosition - v_worldPosition);
+    // Anti-aliasing function for smooth edges
+    float aastep(float threshold, float value) {
+      #ifdef GL_OES_standard_derivatives
+        float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;
+        return smoothstep(threshold - afwidth, threshold + afwidth, value);
+      #else
+        return step(threshold, value);
+      #endif
+    }
+    
+    // Enhanced normal calculation with smoothing
+    vec3 calculateSmoothNormal(vec3 pos, vec3 normal) {
+      #ifdef GL_OES_standard_derivatives
+        vec3 fdx = dFdx(pos);
+        vec3 fdy = dFdy(pos);
+        vec3 smoothNormal = normalize(cross(fdx, fdy));
+        
+        // Blend between mesh normal and calculated normal for smoothing
+        float blendFactor = 0.3;
+        return normalize(mix(normal, smoothNormal, blendFactor));
+      #else
+        return normalize(normal);
+      #endif
+    }
+    
+    // Enhanced PBR lighting with anti-aliasing
+    vec3 calculateLighting(vec3 normal, vec3 viewDir, vec3 lightDir) {
       vec3 halfDir = normalize(lightDir + viewDir);
       
-      // Diffuse
-      float NdotL = max(dot(normal, lightDir), 0.0);
-      vec3 diffuse = u_materialColor * u_lightColor * NdotL;
+      // Smooth diffuse with anti-aliasing
+      float NdotL = dot(normal, lightDir);
+      float diffuseSmooth = aastep(0.0, NdotL);
+      vec3 diffuse = u_materialColor * u_lightColor * diffuseSmooth * max(NdotL, 0.0);
       
-      // Specular
+      // Enhanced specular with multiple lobes for smoothness
       float NdotH = max(dot(normal, halfDir), 0.0);
-      float specular = pow(NdotH, 64.0) * (1.0 - u_roughness) * u_metallic;
+      float NdotV = max(dot(normal, viewDir), 0.0);
+      float VdotH = max(dot(viewDir, halfDir), 0.0);
       
-      // Fresnel
-      float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 2.0);
+      // Multiple specular lobes for smoother appearance
+      float specular1 = pow(NdotH, 64.0) * (1.0 - u_roughness);
+      float specular2 = pow(NdotH, 128.0) * (1.0 - u_roughness) * 0.5;
+      float specular3 = pow(NdotH, 256.0) * (1.0 - u_roughness) * 0.25;
+      float specular = (specular1 + specular2 + specular3) * u_metallic;
       
-      // Ambient
-      vec3 ambient = u_materialColor * 0.1;
+      // Enhanced Fresnel with smoothing
+      float fresnel = pow(1.0 - NdotV, 2.0);
+      fresnel = mix(fresnel, 1.0, u_metallic * 0.5);
       
-      vec3 color = ambient + diffuse + vec3(specular) * u_lightColor + fresnel * u_metallic * 0.3;
+      // Rim lighting for edge enhancement
+      float rim = 1.0 - NdotV;
+      rim = aastep(0.5, rim) * pow(rim, 3.0);
       
-      gl_FragColor = vec4(color, 1.0);
+      // Subsurface scattering approximation for smoothness
+      float subsurface = pow(max(0.0, dot(-lightDir, viewDir)), 4.0) * 0.2;
+      
+      return diffuse + vec3(specular) * u_lightColor + 
+             fresnel * u_metallic * 0.3 + 
+             rim * 0.2 * vec3(1.0, 0.98, 0.95) +
+             subsurface * u_materialColor;
+    }
+    
+    void main() {
+      // Enhanced normal with smoothing
+      vec3 normal = calculateSmoothNormal(v_worldPosition, v_normal);
+      vec3 lightDir = normalize(u_lightPosition - v_worldPosition);
+      vec3 viewDir = normalize(u_viewPosition - v_worldPosition);
+      
+      // Calculate enhanced lighting
+      vec3 litColor = calculateLighting(normal, viewDir, lightDir);
+      
+      // Ambient contribution with smoothing
+      vec3 ambient = u_materialColor * 0.15;
+      
+      // Final color with anti-aliased blending
+      vec3 finalColor = ambient + litColor;
+      
+      // Tone mapping for smoother gradation
+      finalColor = finalColor / (finalColor + vec3(1.0));
+      finalColor = pow(finalColor, vec3(1.0/2.2)); // Gamma correction
+      
+      gl_FragColor = vec4(finalColor, 1.0);
     }
   `;
 
@@ -491,7 +552,9 @@
       alpha: true,
       antialias: true,
       depth: true,
-      powerPreference: 'high-performance'
+      stencil: true,
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: false
     });
     
     if (!gl) {
@@ -500,9 +563,14 @@
       return;
     }
 
-    // Enable depth testing
+    // Enable depth testing and anti-aliasing features
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(1.0, 1.0);
+    
+    // Set better depth function for smoother edges
+    gl.depthFunc(gl.LEQUAL);
     
     // Load STL
     logoMesh = await loadSTL();
@@ -557,7 +625,8 @@
       lightColor: gl.getUniformLocation(logoProgram, 'u_lightColor'),
       materialColor: gl.getUniformLocation(logoProgram, 'u_materialColor'),
       metallic: gl.getUniformLocation(logoProgram, 'u_metallic'),
-      roughness: gl.getUniformLocation(logoProgram, 'u_roughness')
+      roughness: gl.getUniformLocation(logoProgram, 'u_roughness'),
+      resolution: gl.getUniformLocation(logoProgram, 'u_resolution')
     };
     
     // Create background quad
@@ -628,7 +697,8 @@
   function handleResize() {
     if (!canvas || !gl) return;
     
-    const dpr = window.devicePixelRatio || 1;
+    // Use higher DPR for better anti-aliasing on high-DPI displays
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for performance
     const rect = canvas.getBoundingClientRect();
     
     if (rect.width === 0 || rect.height === 0) {
@@ -636,8 +706,10 @@
       return;
     }
     
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    // Use supersampling for smoother edges
+    const supersample = 1.5;
+    canvas.width = rect.width * dpr * supersample;
+    canvas.height = rect.height * dpr * supersample;
     canvas.style.width = rect.width + 'px';
     canvas.style.height = rect.height + 'px';
     
@@ -717,11 +789,12 @@
     gl.uniformMatrix4fv(logoUniforms.normalMatrix, false, normalMatrix);
     
     gl.uniform3f(logoUniforms.lightPosition, 3.0, 3.0, 5.0);
-    gl.uniform3f(logoUniforms.viewPosition, 0.0, 0.0, 5.0);
+    gl.uniform3f(logoUniforms.viewPosition, 0.0, 0.0, 3.0);
     gl.uniform3f(logoUniforms.lightColor, 1.0, 1.0, 1.0);
-    gl.uniform3f(logoUniforms.materialColor, 0.9, 0.9, 0.9);
-    gl.uniform1f(logoUniforms.metallic, 0.8);
-    gl.uniform1f(logoUniforms.roughness, 0.2);
+    gl.uniform3f(logoUniforms.materialColor, 0.95, 0.93, 0.91);
+    gl.uniform1f(logoUniforms.metallic, 0.7);
+    gl.uniform1f(logoUniforms.roughness, 0.15);
+    gl.uniform3f(logoUniforms.resolution, canvas.width, canvas.height, 1.0);
     
     // Bind logo attributes
     const logoPositionLocation = gl.getAttribLocation(logoProgram, 'a_position');
