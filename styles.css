@@ -137,12 +137,23 @@ body {
 .chin-overlay {
   position: fixed;
   bottom: 0;
-  left: 4.5px;
-  right: 4.5px;
-  height: 30px;
+  left: 0;
+  right: 0;
+  height: 34.5px; /* 30px content + 4.5px to cover bottom border */
   background: #000;
   z-index: 1;
-  border-radius: 9px 9px 0 0;
+}
+
+/* Inner edge with inverted corners */
+.chin-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4.5px;
+  right: 4.5px;
+  height: 9px;
+  background: hsl(var(--background));
+  border-radius: 0 0 9px 9px;
 }
 
 /* Copyright text */
@@ -173,7 +184,7 @@ body {
 
 .copyright-text {
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: 9px;
   color: hsl(var(--muted-foreground));
   opacity: 0.7;
   user-select: none;
@@ -184,14 +195,13 @@ body {
 
 .copyright-contact {
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: 9px;
   color: hsl(var(--muted-foreground));
-  text-decoration: none;
+  text-decoration: underline;
   opacity: 0.7;
 }
 
 .copyright-contact:hover {
-  text-decoration: underline;
   opacity: 1;
 }
 
@@ -200,12 +210,10 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  right: 0;
+  bottom: 0;
   background: #000;
-  border-radius: 0;
   z-index: -2;
-  overflow: hidden;
 }
 
 /* Gradient Canvas Styles */
@@ -213,8 +221,8 @@ body {
   position: fixed;
   top: 4.5px;
   left: 4.5px;
-  width: calc(100vw - 9px);
-  height: calc(100vh - 34.5px); /* 30px chin + 4.5px bottom border */
+  right: 4.5px;
+  bottom: 34.5px; /* 30px chin + 4.5px bottom border */
   z-index: -1;
   pointer-events: none;
   background: transparent;
@@ -226,8 +234,8 @@ body {
   position: fixed;
   top: 4.5px;
   left: 4.5px;
-  width: calc(100vw - 9px);
-  height: calc(100vh - 34.5px); /* 30px chin + 4.5px bottom border */
+  right: 4.5px;
+  bottom: 34.5px; /* 30px chin + 4.5px bottom border */
   z-index: 0;
   pointer-events: auto;
   background: transparent;
