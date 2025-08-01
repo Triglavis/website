@@ -126,6 +126,17 @@ body {
 /* Import Space Mono font */
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400&display=swap');
 
+/* Chin overlay - black bar at bottom */
+.chin-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: #000;
+  z-index: 90;
+}
+
 /* Copyright text */
 .copyright-container {
   position: fixed;
@@ -196,7 +207,7 @@ body {
   }
 }
 
-/* Border container - creates the black/white border */
+/* Border container - creates the black border */
 .border-container {
   position: fixed;
   top: 0;
@@ -207,12 +218,6 @@ body {
   border-radius: 0;
   padding: 4.5px;
   z-index: -2;
-}
-
-@media (prefers-color-scheme: dark) {
-  .border-container {
-    background: #fff;
-  }
 }
 
 /* Gradient Canvas Styles */
