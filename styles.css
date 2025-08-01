@@ -140,8 +140,12 @@ body {
 .copyright-text {
   font-family: 'Space Mono', monospace;
   font-size: 10px;
-  color: hsl(var(--muted-foreground));
-  opacity: 0.4;
+  color: #000;
+  background: #fff;
+  text-decoration: none;
+  border-radius: 2px;
+  opacity: 0.9;
+  padding: 0 3px;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -156,6 +160,7 @@ body {
   text-decoration: none;
   border-radius: 2px;
   opacity: 0.9;
+  padding: 0 3px;
 }
 
 .copyright-contact:hover {
@@ -163,6 +168,12 @@ body {
 }
 
 @media (prefers-color-scheme: dark) {
+  .copyright-text {
+    color: #fff;
+    background: #000;
+    border: 1px solid #333;
+  }
+  
   .copyright-contact {
     color: #fff;
     background: #000;
@@ -175,10 +186,10 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100dvw;
+  height: 100dvh;
   background: #000;
-  border-radius: 4.5px;
+  border-radius: 0;
   padding: 4.5px;
   z-index: -2;
 }
@@ -194,10 +205,8 @@ body {
   position: fixed;
   top: 4.5px;
   left: 4.5px;
-  right: 4.5px;
-  bottom: 4.5px;
-  width: calc(100% - 9px);
-  height: calc(100% - 9px);
+  width: calc(100dvw - 9px);
+  height: calc(100dvh - 9px);
   z-index: -1;
   pointer-events: none;
   background: transparent;
@@ -209,10 +218,8 @@ body {
   position: fixed;
   top: 4.5px;
   left: 4.5px;
-  right: 4.5px;
-  bottom: 4.5px;
-  width: calc(100% - 9px);
-  height: calc(100% - 9px);
+  width: calc(100dvw - 9px);
+  height: calc(100dvh - 9px);
   z-index: 0;
   pointer-events: auto;
   background: transparent;
