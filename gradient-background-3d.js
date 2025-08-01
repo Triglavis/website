@@ -151,50 +151,49 @@
       return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0) - radius;
     }
 
-    // 2D SDF for Triglavis logo shape (based on actual SVG path)
+    // 2D SDF for Triglavis logo shape (based on exact SVG path analysis)
     float sdTriglavisLogo2D(vec2 p) {
-      // Scale and center properly
-      p *= 1.8;
-      p.y += 0.1; // Adjust center
+      // Normalize to SVG coordinate space (296x303 viewBox)
+      // Convert from centered (-1,1) to SVG coordinates
+      vec2 svgP = vec2((p.x + 1.0) * 148.0 + 48.0, (-p.y + 1.0) * 151.5 + 48.0);
       
-      // Main base - large rounded rectangle at bottom
-      vec2 basePos = p - vec2(0.0, -0.4);
-      float base = sdRoundedRect(basePos, vec2(1.0, 0.25), 0.12);
+      // Scale factor for SDF operations
+      float scale = 200.0;
       
-      // Left arm - tall rounded rectangle
-      vec2 leftArmPos = p - vec2(-0.8, 0.0);
-      float leftArm = sdRoundedRect(leftArmPos, vec2(0.18, 0.6), 0.08);
+      // Top rounded rectangle (coordinates: 48-248 x, 48-100 y)
+      vec2 topPos = (svgP - vec2(148.0, 74.0)) / scale;
+      float topRect = sdRoundedRect(topPos, vec2(100.0/scale, 26.0/scale), 15.0/scale);
       
-      // Right arm - tall rounded rectangle  
-      vec2 rightArmPos = p - vec2(0.8, 0.0);
-      float rightArm = sdRoundedRect(rightArmPos, vec2(0.18, 0.6), 0.08);
+      // Left rounded rectangle (coordinates: 48-98 x, 163-255 y) 
+      vec2 leftPos = (svgP - vec2(73.0, 209.0)) / scale;
+      float leftRect = sdRoundedRect(leftPos, vec2(25.0/scale, 46.0/scale), 8.0/scale);
       
-      // Center T-shape body
-      vec2 tBodyPos = p - vec2(0.0, 0.15);
-      float tBody = sdRoundedRect(tBodyPos, vec2(0.12, 0.35), 0.06);
+      // Right rounded rectangle (coordinates: 198-248 x, 163-255 y)
+      vec2 rightPos = (svgP - vec2(223.0, 209.0)) / scale;
+      float rightRect = sdRoundedRect(rightPos, vec2(25.0/scale, 46.0/scale), 8.0/scale);
       
-      // T-shape horizontal bar (top part)
-      vec2 tBarPos = p - vec2(0.0, 0.4);
-      float tBar = sdRoundedRect(tBarPos, vec2(0.35, 0.08), 0.04);
+      // Center triangle/diamond (coordinates around 124-172 x, 206-255 y)
+      vec2 centerPos = (svgP - vec2(148.0, 241.0)) / scale;
+      // Create diamond shape using rotated square
+      float centerDiamond = length(max(abs(mat2(0.707, -0.707, 0.707, 0.707) * centerPos) - vec2(12.0/scale), 0.0));
       
-      // T-shape curved connections (approximate with small rectangles)
-      vec2 leftConnPos = p - vec2(-0.25, 0.25);
-      float leftConn = sdRoundedRect(leftConnPos, vec2(0.08, 0.15), 0.04);
+      // Vertical connectors between top and sides (approximated)
+      vec2 leftConnPos = (svgP - vec2(98.0, 131.0)) / scale;
+      float leftConn = sdRoundedRect(leftConnPos, vec2(8.0/scale, 30.0/scale), 4.0/scale);
       
-      vec2 rightConnPos = p - vec2(0.25, 0.25);
-      float rightConn = sdRoundedRect(rightConnPos, vec2(0.08, 0.15), 0.04);
+      vec2 rightConnPos = (svgP - vec2(198.0, 131.0)) / scale;
+      float rightConn = sdRoundedRect(rightConnPos, vec2(8.0/scale, 30.0/scale), 4.0/scale);
       
-      // Top diamond/arrow shape
-      vec2 diamondPos = p - vec2(0.0, 0.65);
-      float diamond = abs(diamondPos.x) + abs(diamondPos.y) * 1.5 - 0.08;
+      // Center vertical stem
+      vec2 stemPos = (svgP - vec2(148.0, 175.0)) / scale;
+      float stem = sdRoundedRect(stemPos, vec2(6.0/scale, 50.0/scale), 3.0/scale);
       
-      // Combine the T-shape parts
-      float tShape = min(tBody, min(tBar, min(leftConn, rightConn)));
+      // Combine all elements
+      float sideRects = min(leftRect, rightRect);
+      float connections = min(leftConn, rightConn);
+      float centerElements = min(centerDiamond, stem);
       
-      // Combine all parts
-      float arms = min(leftArm, rightArm);
-      float centerParts = min(tShape, diamond);
-      float logo = min(base, min(arms, centerParts));
+      float logo = min(topRect, min(sideRects, min(connections, centerElements)));
       
       return logo;
     }
