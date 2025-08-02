@@ -642,83 +642,136 @@
     return program;
   }
 
-  async function loadSTL() {
+  async function loadGLTF() {
     try {
-      const response = await fetch('./triglavis_dark.stl');
+      const response = await fetch('./3dtriglav.glb');
       const buffer = await response.arrayBuffer();
-      
       const view = new DataView(buffer);
-      let offset = 80; // Skip header
-      const numTriangles = view.getUint32(offset, true);
+      let offset = 0;
+
+      // Read GLB header
+      const magic = view.getUint32(offset, true);
       offset += 4;
-      
+      if (magic !== 0x46546C67) { // 'glTF'
+        throw new Error('Invalid GLB file');
+      }
+
+      const version = view.getUint32(offset, true);
+      offset += 4;
+      const length = view.getUint32(offset, true);
+      offset += 4;
+
+      // Read JSON chunk
+      const jsonChunkLength = view.getUint32(offset, true);
+      offset += 4;
+      const jsonChunkType = view.getUint32(offset, true);
+      offset += 4;
+
+      const jsonBytes = new Uint8Array(buffer, offset, jsonChunkLength);
+      const jsonText = new TextDecoder().decode(jsonBytes);
+      const gltf = JSON.parse(jsonText);
+      offset += jsonChunkLength;
+
+      // Read binary chunk
+      const binChunkLength = view.getUint32(offset, true);
+      offset += 4;
+      const binChunkType = view.getUint32(offset, true);
+      offset += 4;
+
+      const binData = new ArrayBuffer(binChunkLength);
+      new Uint8Array(binData).set(new Uint8Array(buffer, offset, binChunkLength));
+
+      // Extract mesh data
       const vertices = [];
       const normals = [];
       const indices = [];
-      
-      for (let i = 0; i < numTriangles; i++) {
-        // Read normal
-        const nx = view.getFloat32(offset, true);
-        const ny = view.getFloat32(offset + 4, true);
-        const nz = view.getFloat32(offset + 8, true);
-        offset += 12;
-        
-        // Read vertices
-        for (let j = 0; j < 3; j++) {
-          const x = view.getFloat32(offset, true);
-          const y = view.getFloat32(offset + 4, true);
-          const z = view.getFloat32(offset + 8, true);
-          offset += 12;
-          
-          vertices.push(x, y, z);
-          normals.push(nx, ny, nz);
-          indices.push(vertices.length / 3 - 1);
-        }
-        
-        offset += 2; // Skip attribute count
+
+      // Get the first mesh
+      const mesh = gltf.meshes[0];
+      const primitive = mesh.primitives[0];
+
+      // Extract position data
+      const posAccessor = gltf.accessors[primitive.attributes.POSITION];
+      const posBufferView = gltf.bufferViews[posAccessor.bufferView];
+      const posData = new Float32Array(
+        binData,
+        posBufferView.byteOffset || 0,
+        posAccessor.count * 3
+      );
+
+      // Extract normal data (GLTF files should have smooth normals)
+      let normData;
+      if (primitive.attributes.NORMAL !== undefined) {
+        const normAccessor = gltf.accessors[primitive.attributes.NORMAL];
+        const normBufferView = gltf.bufferViews[normAccessor.bufferView];
+        normData = new Float32Array(
+          binData,
+          normBufferView.byteOffset || 0,
+          normAccessor.count * 3
+        );
       }
-      
-      // Post-process: smooth normals for better anti-aliasing
-      const smoothedNormals = new Float32Array(normals.length);
-      
-      // Average normals for shared vertices
-      for (let i = 0; i < vertices.length; i += 3) {
-        let sumX = 0, sumY = 0, sumZ = 0;
-        let count = 0;
+
+      // Extract indices
+      let indexData;
+      if (primitive.indices !== undefined) {
+        const indexAccessor = gltf.accessors[primitive.indices];
+        const indexBufferView = gltf.bufferViews[indexAccessor.bufferView];
         
-        const vx = vertices[i];
-        const vy = vertices[i + 1];
-        const vz = vertices[i + 2];
-        
-        // Find all vertices at the same position
-        for (let j = 0; j < vertices.length; j += 3) {
-          const dx = vertices[j] - vx;
-          const dy = vertices[j + 1] - vy;
-          const dz = vertices[j + 2] - vz;
-          
-          if (dx * dx + dy * dy + dz * dz < 0.0001) { // Same vertex
-            sumX += normals[j];
-            sumY += normals[j + 1];
-            sumZ += normals[j + 2];
-            count++;
+        if (indexAccessor.componentType === 5123) { // UNSIGNED_SHORT
+          indexData = new Uint16Array(
+            binData,
+            indexBufferView.byteOffset || 0,
+            indexAccessor.count
+          );
+        } else if (indexAccessor.componentType === 5125) { // UNSIGNED_INT
+          const uint32Data = new Uint32Array(
+            binData,
+            indexBufferView.byteOffset || 0,
+            indexAccessor.count
+          );
+          // Convert to Uint16 for WebGL compatibility
+          indexData = new Uint16Array(indexAccessor.count);
+          for (let i = 0; i < indexAccessor.count; i++) {
+            indexData[i] = uint32Data[i];
           }
         }
-        
-        // Normalize the averaged normal
-        const len = Math.sqrt(sumX * sumX + sumY * sumY + sumZ * sumZ);
-        smoothedNormals[i] = sumX / len;
-        smoothedNormals[i + 1] = sumY / len;
-        smoothedNormals[i + 2] = sumZ / len;
       }
-      
+
+      // If no indices, create them
+      if (!indexData) {
+        indexData = new Uint16Array(posData.length / 3);
+        for (let i = 0; i < indexData.length; i++) {
+          indexData[i] = i;
+        }
+      }
+
+      // Calculate bounds for auto-scaling
+      let minX = Infinity, minY = Infinity, minZ = Infinity;
+      let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+
+      for (let i = 0; i < posData.length; i += 3) {
+        minX = Math.min(minX, posData[i]);
+        maxX = Math.max(maxX, posData[i]);
+        minY = Math.min(minY, posData[i + 1]);
+        maxY = Math.max(maxY, posData[i + 1]);
+        minZ = Math.min(minZ, posData[i + 2]);
+        maxZ = Math.max(maxZ, posData[i + 2]);
+      }
+
+      const size = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
+      const scale = 2.0 / size; // Normalize to fit in view
+
+      console.log('Loaded GLTF with', posData.length / 3, 'vertices');
+
       return {
-        vertices: new Float32Array(vertices),
-        normals: smoothedNormals,
-        indices: new Uint16Array(indices),
-        numTriangles
+        vertices: posData,
+        normals: normData || posData, // Fallback if no normals
+        indices: indexData,
+        scale: scale,
+        center: [(minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2]
       };
     } catch (error) {
-      console.error('Failed to load STL:', error);
+      console.error('Failed to load GLTF:', error);
       return null;
     }
   }
@@ -763,8 +816,8 @@
       gl.sampleCoverage(1.0, false);
     }
     
-    // Load STL
-    logoMesh = await loadSTL();
+    // Load GLTF
+    logoMesh = await loadGLTF();
     if (!logoMesh) {
       console.error('Failed to load logo mesh');
       return;
@@ -973,9 +1026,15 @@
     lookAt(viewMatrix, [0, 0, 3], [0, 0, 0], [0, 1, 0]);
     
     identity(modelMatrix);
-    // Scale up the logo to be prominent and center it
-    scale(modelMatrix, modelMatrix, [0.15, 0.15, 0.15]); // Much larger scale
-    translate(modelMatrix, modelMatrix, [0, 0, 0]);
+    // Use auto-calculated scale and center the mesh
+    const meshScale = logoMesh.scale * 0.5; // Adjust size as needed
+    scale(modelMatrix, modelMatrix, [meshScale, meshScale, meshScale]);
+    // Center the mesh
+    translate(modelMatrix, modelMatrix, [
+      -logoMesh.center[0] * meshScale,
+      -logoMesh.center[1] * meshScale,
+      -logoMesh.center[2] * meshScale
+    ]);
     
     identity(normalMatrix); // Simplified - should be inverse transpose of model matrix
     
