@@ -645,7 +645,12 @@
   async function loadGLTF() {
     try {
       const response = await fetch('./3dtriglav.glb');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch GLB file: ${response.status}`);
+      }
       const buffer = await response.arrayBuffer();
+      console.log('GLB file size:', buffer.byteLength);
+      
       const view = new DataView(buffer);
       let offset = 0;
 
@@ -672,31 +677,51 @@
       const gltf = JSON.parse(jsonText);
       offset += jsonChunkLength;
 
-      // Read binary chunk
-      const binChunkLength = view.getUint32(offset, true);
-      offset += 4;
-      const binChunkType = view.getUint32(offset, true);
-      offset += 4;
+      // Read binary chunk (if it exists)
+      let binData = null;
+      if (offset < buffer.byteLength) {
+        const binChunkLength = view.getUint32(offset, true);
+        offset += 4;
+        const binChunkType = view.getUint32(offset, true);
+        offset += 4;
 
-      const binData = new ArrayBuffer(binChunkLength);
-      new Uint8Array(binData).set(new Uint8Array(buffer, offset, binChunkLength));
+        binData = new ArrayBuffer(binChunkLength);
+        new Uint8Array(binData).set(new Uint8Array(buffer, offset, binChunkLength));
+      }
 
       // Extract mesh data
       const vertices = [];
       const normals = [];
       const indices = [];
 
+      // Check if we have meshes
+      if (!gltf.meshes || gltf.meshes.length === 0) {
+        throw new Error('No meshes found in GLTF file');
+      }
+
       // Get the first mesh
       const mesh = gltf.meshes[0];
       const primitive = mesh.primitives[0];
+      
+      // Check if binary data exists
+      if (!binData && gltf.buffers && gltf.buffers[0].uri) {
+        throw new Error('External buffer URIs not supported - please use GLB format');
+      }
 
       // Extract position data
       const posAccessor = gltf.accessors[primitive.attributes.POSITION];
       const posBufferView = gltf.bufferViews[posAccessor.bufferView];
+      
+      // Calculate actual byte length needed
+      const elementSize = 4; // Float32
+      const componentCount = 3; // xyz
+      const byteLength = posAccessor.count * componentCount * elementSize;
+      const byteOffset = (posBufferView.byteOffset || 0) + (posAccessor.byteOffset || 0);
+      
       const posData = new Float32Array(
         binData,
-        posBufferView.byteOffset || 0,
-        posAccessor.count * 3
+        byteOffset,
+        posAccessor.count * componentCount
       );
 
       // Extract normal data (GLTF files should have smooth normals)
@@ -704,9 +729,11 @@
       if (primitive.attributes.NORMAL !== undefined) {
         const normAccessor = gltf.accessors[primitive.attributes.NORMAL];
         const normBufferView = gltf.bufferViews[normAccessor.bufferView];
+        const normByteOffset = (normBufferView.byteOffset || 0) + (normAccessor.byteOffset || 0);
+        
         normData = new Float32Array(
           binData,
-          normBufferView.byteOffset || 0,
+          normByteOffset,
           normAccessor.count * 3
         );
       }
@@ -716,17 +743,18 @@
       if (primitive.indices !== undefined) {
         const indexAccessor = gltf.accessors[primitive.indices];
         const indexBufferView = gltf.bufferViews[indexAccessor.bufferView];
+        const indexByteOffset = (indexBufferView.byteOffset || 0) + (indexAccessor.byteOffset || 0);
         
         if (indexAccessor.componentType === 5123) { // UNSIGNED_SHORT
           indexData = new Uint16Array(
             binData,
-            indexBufferView.byteOffset || 0,
+            indexByteOffset,
             indexAccessor.count
           );
         } else if (indexAccessor.componentType === 5125) { // UNSIGNED_INT
           const uint32Data = new Uint32Array(
             binData,
-            indexBufferView.byteOffset || 0,
+            indexByteOffset,
             indexAccessor.count
           );
           // Convert to Uint16 for WebGL compatibility
