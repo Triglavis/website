@@ -117,6 +117,9 @@
     
     cols = Math.ceil(width / CELL_SIZE);
     rows = Math.ceil(height / CELL_SIZE);
+    
+    // Re-cache symbols after resize to ensure proper rendering
+    cacheSymbols();
   }
 
   function detectColorScheme() {
