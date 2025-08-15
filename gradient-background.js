@@ -395,22 +395,25 @@
     if (!canvas || !gl) return;
     
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
+    
+    // Use window dimensions directly for full viewport coverage
+    const width = window.innerWidth;
+    const height = window.innerHeight;
     
     // Check if we got valid dimensions
-    if (rect.width === 0 || rect.height === 0) {
-      console.warn('Canvas has zero dimensions, retrying...');
+    if (width === 0 || height === 0) {
+      console.warn('Window has zero dimensions, retrying...');
       setTimeout(handleResize, 100);
       return;
     }
     
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
     
     gl.viewport(0, 0, canvas.width, canvas.height);
-    console.log('Canvas resized:', rect.width, 'x', rect.height);
+    console.log('Canvas resized:', width, 'x', height);
   }
 
   function animate() {
