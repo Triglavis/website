@@ -4,8 +4,53 @@
   let uniforms = {};
   let startTime = Date.now();
   let animationId = null;
-  let mouseX = 0.5, mouseY = 0.5;
   let isDarkMode = true; // Always use dark mode
+
+  const POINTER_INTERACTION = {
+    radius: 0.42,
+    maxVelocity: 2.6,
+    holdMs: 140,
+    decayMs: 760
+  };
+
+  const RIPPLE_CONFIG = {
+    count: 4,
+    duration: 2.4,
+    maxTapDistance: 18,
+    maxTapMs: 240
+  };
+
+  const pointer = {
+    x: 0.5,
+    y: 0.5,
+    vx: 0,
+    vy: 0,
+    speed: 0,
+    smoothX: 0.5,
+    smoothY: 0.5,
+    smoothVx: 0,
+    smoothVy: 0,
+    lastX: 0.5,
+    lastY: 0.5,
+    lastTime: null,
+    lastMoveTime: null,
+    lastFrameTime: null,
+    isDown: false,
+    pointerId: null,
+    pointerType: 'mouse',
+    downX: 0,
+    downY: 0,
+    downTime: 0
+  };
+
+  const ripples = Array.from({ length: RIPPLE_CONFIG.count }, () => ({
+    x: 0.5,
+    y: 0.5,
+    startTime: -1000,
+    strength: 0
+  }));
+  let rippleIndex = 0;
+  const rippleData = new Float32Array(RIPPLE_CONFIG.count * 4);
 
   const vertexShaderSource = `
     attribute vec2 a_position;
@@ -20,6 +65,10 @@
     uniform vec3 iResolution;
     uniform float iTime;
     uniform vec2 iMouse;
+    uniform vec2 iVelocity;
+    uniform float iPointerStrength;
+    uniform float iPointerRadius;
+    uniform vec4 iRipples[4];
     uniform float noiseIntensity;
     uniform float noiseScale;
     uniform float noiseSpeed;
@@ -37,6 +86,14 @@
     #define INTENSITY 0.075
     #define MEAN 0.0
     #define VARIANCE 0.5
+    #define RIPPLE_COUNT 4
+
+    const float RIPPLE_DURATION = 2.4;
+    const float RIPPLE_SPEED = 1.55;
+    const float RIPPLE_FREQUENCY = 12.5;
+    const float RIPPLE_DECAY = 1.35;
+    const float RIPPLE_WARP = 0.055;
+    const float RIPPLE_SHADE = 0.12;
 
     vec2 hash(vec2 p) {
       p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -236,14 +293,43 @@
       vec2 fragCoord = gl_FragCoord.xy;
       vec2 uv = fragCoord / iResolution.xy;
       vec2 centeredUv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;
-      
+
+      vec2 pointerCenter = (iMouse * iResolution.xy - 0.5 * iResolution.xy) / iResolution.y;
+      vec2 toPointer = centeredUv - pointerCenter;
+      float pointerDist = length(toPointer);
+      float pointerFalloff = smoothstep(iPointerRadius, 0.0, pointerDist);
+      float pointerStrength = iPointerStrength * pointerFalloff;
+
+      vec2 flowDir = normalize(iVelocity + vec2(0.0001));
+      vec2 flowSwirl = vec2(-flowDir.y, flowDir.x);
+      vec2 pointerOffset = (flowDir * 0.08 + flowSwirl * 0.055) * pointerStrength;
+
+      vec2 warpedUv = warp(centeredUv);
       vec2 mouseUv = (iMouse - 0.5) * 2.0;
       float mouseDistance = length(centeredUv - mouseUv);
-      float mouseEffect = exp(-mouseDistance * 8.0) * 0.15;
-      
-      vec2 warpedUv = warp(centeredUv);
+      float mouseEffect = exp(-mouseDistance * 8.0) * 0.16 * pointerStrength;
       warpedUv += mouseEffect * sin(mouseDistance * 15.0 - iTime * 1.5) * 0.03;
-      
+      warpedUv += pointerOffset;
+
+      vec2 rippleOffset = vec2(0.0);
+      float rippleShade = 0.0;
+      for (int i = 0; i < RIPPLE_COUNT; i++) {
+        vec4 ripple = iRipples[i];
+        float age = iTime - ripple.z;
+        if (ripple.w > 0.0 && age >= 0.0 && age <= RIPPLE_DURATION) {
+          vec2 center = (ripple.xy * iResolution.xy - 0.5 * iResolution.xy) / iResolution.y;
+          vec2 diff = centeredUv - center;
+          float dist = length(diff);
+          float wave = sin((dist - age * RIPPLE_SPEED) * RIPPLE_FREQUENCY);
+          float envelope = exp(-age * RIPPLE_DECAY) * smoothstep(RIPPLE_DURATION, RIPPLE_DURATION - 0.35, age);
+          float ring = wave * envelope / (1.0 + dist * 8.0);
+          vec2 dir = normalize(diff + vec2(0.0001));
+          rippleOffset += dir * ring * ripple.w * RIPPLE_WARP;
+          rippleShade += ring * ripple.w * RIPPLE_SHADE;
+        }
+      }
+      warpedUv += rippleOffset;
+
       float simplexNoise = snoise(vec3(warpedUv * noiseScale, iTime * noiseSpeed)) * noiseIntensity;
       warpedUv += simplexNoise;
       
@@ -259,7 +345,7 @@
       float parabolicArch = -pow(warpedUv.x, 2.0) * 0.2;
 
       float breathing = sin(iTime * 0.5) * 0.1 + 0.9;
-      float combinedWave = (wave1 + wave2 + wave3 + parabolicArch) * breathing * 0.3;
+      float combinedWave = (wave1 + wave2 + wave3 + parabolicArch) * breathing * 0.3 + rippleShade;
       
       float gradientPos = (uv.y + combinedWave * 0.3);
       float smoothGradientPos = smoothstep(0.0, 1.0, clamp(1.0 - gradientPos, 0.0, 1.0));
@@ -341,6 +427,10 @@
       iResolution: gl.getUniformLocation(program, 'iResolution'),
       iTime: gl.getUniformLocation(program, 'iTime'),
       iMouse: gl.getUniformLocation(program, 'iMouse'),
+      iVelocity: gl.getUniformLocation(program, 'iVelocity'),
+      iPointerStrength: gl.getUniformLocation(program, 'iPointerStrength'),
+      iPointerRadius: gl.getUniformLocation(program, 'iPointerRadius'),
+      iRipples: gl.getUniformLocation(program, 'iRipples[0]'),
       noiseIntensity: gl.getUniformLocation(program, 'noiseIntensity'),
       noiseScale: gl.getUniformLocation(program, 'noiseScale'),
       noiseSpeed: gl.getUniformLocation(program, 'noiseSpeed'),
@@ -371,9 +461,35 @@
     gl.enableVertexAttribArray(positionAttributeLocation);
     gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
     
-    // Mouse tracking
-    window.addEventListener('mousemove', handleMouseMove);
+    if (window.PointerEvent) {
+      window.addEventListener('pointerdown', handlePointerDown, { passive: true });
+      window.addEventListener('pointermove', handlePointerMove, { passive: true });
+      window.addEventListener('pointerup', handlePointerUp, { passive: true });
+      window.addEventListener('pointercancel', handlePointerUp, { passive: true });
+      window.addEventListener('pointerleave', handlePointerLeave, { passive: true });
+    } else {
+      window.addEventListener('mousemove', handlePointerMove, { passive: true });
+      window.addEventListener('mousedown', handlePointerDown, { passive: true });
+      window.addEventListener('mouseup', handlePointerUp, { passive: true });
+      window.addEventListener('touchstart', (event) => {
+        const touch = event.touches[0];
+        if (!touch) return;
+        handlePointerDown({ clientX: touch.clientX, clientY: touch.clientY, pointerType: 'touch' });
+      }, { passive: true });
+      window.addEventListener('touchmove', (event) => {
+        const touch = event.touches[0];
+        if (!touch) return;
+        handlePointerMove({ clientX: touch.clientX, clientY: touch.clientY, pointerType: 'touch' });
+      }, { passive: true });
+      window.addEventListener('touchend', (event) => {
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+        handlePointerUp({ clientX: touch.clientX, clientY: touch.clientY, pointerType: 'touch' });
+      }, { passive: true });
+    }
+
     window.addEventListener('resize', handleResize);
+    window.addEventListener('blur', handlePointerLeave);
     
     // Always use dark mode
     isDarkMode = true;
@@ -386,9 +502,106 @@
     }, 100);
   }
 
-  function handleMouseMove(e) {
-    mouseX = e.clientX / window.innerWidth;
-    mouseY = 1.0 - (e.clientY / window.innerHeight);
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function nowSeconds() {
+    return (Date.now() - startTime) * 0.001;
+  }
+
+  function normalizePointer(clientX, clientY) {
+    const width = window.innerWidth || 1;
+    const height = window.innerHeight || 1;
+    return {
+      x: clamp(clientX / width, 0, 1),
+      y: clamp(1 - clientY / height, 0, 1)
+    };
+  }
+
+  function updatePointer(x, y, nowMs, isMove) {
+    if (!isMove || pointer.lastTime == null) {
+      pointer.vx = 0;
+      pointer.vy = 0;
+      pointer.speed = 0;
+    } else {
+      const dt = Math.max((nowMs - pointer.lastTime) / 1000, 0.001);
+      const vx = clamp((x - pointer.lastX) / dt, -POINTER_INTERACTION.maxVelocity, POINTER_INTERACTION.maxVelocity);
+      const vy = clamp((y - pointer.lastY) / dt, -POINTER_INTERACTION.maxVelocity, POINTER_INTERACTION.maxVelocity);
+      pointer.vx = vx;
+      pointer.vy = vy;
+    }
+
+    pointer.x = x;
+    pointer.y = y;
+    pointer.lastX = x;
+    pointer.lastY = y;
+    pointer.lastTime = nowMs;
+    if (isMove) {
+      pointer.lastMoveTime = nowMs;
+    }
+  }
+
+  function addRipple(x, y, pressure, pressDurationMs) {
+    const durationBoost = clamp(pressDurationMs / 300, 0, 0.6);
+    const force = clamp(0.45 + durationBoost, 0.45, 1);
+    const pressureBoost = clamp(0.7 + (pressure || 0.5) * 0.6, 0.7, 1.2);
+    const ripple = ripples[rippleIndex];
+    ripple.x = x;
+    ripple.y = y;
+    ripple.startTime = nowSeconds();
+    ripple.strength = clamp(force * pressureBoost, 0.35, 1);
+    rippleIndex = (rippleIndex + 1) % RIPPLE_CONFIG.count;
+  }
+
+  function handlePointerDown(event) {
+    if (pointer.isDown && pointer.pointerId != null && pointer.pointerId !== event.pointerId) return;
+    pointer.isDown = true;
+    pointer.pointerId = event.pointerId;
+    pointer.pointerType = event.pointerType || 'mouse';
+
+    const nowMs = performance.now();
+    const coords = normalizePointer(event.clientX, event.clientY);
+    pointer.downX = event.clientX;
+    pointer.downY = event.clientY;
+    pointer.downTime = nowMs;
+    updatePointer(coords.x, coords.y, nowMs, false);
+    pointer.lastMoveTime = nowMs;
+  }
+
+  function handlePointerMove(event) {
+    if (event.pointerType && event.pointerType !== 'mouse') {
+      if (!pointer.isDown || (pointer.pointerId != null && event.pointerId !== pointer.pointerId)) return;
+    }
+    const nowMs = performance.now();
+    const coords = normalizePointer(event.clientX, event.clientY);
+    updatePointer(coords.x, coords.y, nowMs, true);
+  }
+
+  function handlePointerUp(event) {
+    if (pointer.pointerId != null && event.pointerId !== pointer.pointerId) return;
+    const nowMs = performance.now();
+    const dist = Math.hypot(event.clientX - pointer.downX, event.clientY - pointer.downY);
+    const elapsed = nowMs - pointer.downTime;
+
+    if ((event.pointerType === 'touch' || event.pointerType === 'pen') &&
+      dist <= RIPPLE_CONFIG.maxTapDistance &&
+      elapsed <= RIPPLE_CONFIG.maxTapMs) {
+      const coords = normalizePointer(event.clientX, event.clientY);
+      addRipple(coords.x, coords.y, event.pressure, elapsed);
+    }
+
+    pointer.isDown = false;
+    pointer.pointerId = null;
+  }
+
+  function handlePointerLeave() {
+    pointer.lastMoveTime = performance.now() - (POINTER_INTERACTION.holdMs + POINTER_INTERACTION.decayMs + 1);
+    pointer.vx = 0;
+    pointer.vy = 0;
+    pointer.smoothVx = 0;
+    pointer.smoothVy = 0;
+    pointer.speed = 0;
   }
 
   function handleResize() {
@@ -423,6 +636,58 @@
     }
     
     const currentTime = (Date.now() - startTime) * 0.001;
+    const nowMs = performance.now();
+    const frameDt = pointer.lastFrameTime == null ? 0.016 : Math.max((nowMs - pointer.lastFrameTime) / 1000, 0.001);
+    pointer.lastFrameTime = nowMs;
+
+    const positionLerp = 1 - Math.exp(-frameDt * 10);
+    const velocityLerp = 1 - Math.exp(-frameDt * 12);
+    pointer.smoothX += (pointer.x - pointer.smoothX) * positionLerp;
+    pointer.smoothY += (pointer.y - pointer.smoothY) * positionLerp;
+    pointer.smoothVx += (pointer.vx - pointer.smoothVx) * velocityLerp;
+    pointer.smoothVy += (pointer.vy - pointer.smoothVy) * velocityLerp;
+    pointer.speed = Math.hypot(pointer.smoothVx, pointer.smoothVy);
+
+    let pointerStrength = 0;
+    let pointerRadius = POINTER_INTERACTION.radius;
+    if (pointer.lastMoveTime != null) {
+      const msSinceMove = nowMs - pointer.lastMoveTime;
+      let influence = 0;
+      if (msSinceMove <= POINTER_INTERACTION.holdMs) {
+        influence = 1;
+      } else {
+        influence = clamp(
+          1 - (msSinceMove - POINTER_INTERACTION.holdMs) / POINTER_INTERACTION.decayMs,
+          0,
+          1
+        );
+      }
+
+      const speedStrength = clamp(pointer.speed / POINTER_INTERACTION.maxVelocity, 0, 1);
+      pointerStrength = influence * Math.pow(speedStrength, 0.85);
+      pointerRadius = POINTER_INTERACTION.radius * (0.9 + speedStrength * 0.25);
+    }
+
+    const aspect = (window.innerWidth || 1) / Math.max(window.innerHeight || 1, 1);
+    const velocityScale = pointerStrength > 0 ? 1 : 0;
+    const velX = pointer.smoothVx * aspect * velocityScale;
+    const velY = pointer.smoothVy * velocityScale;
+
+    for (let i = 0; i < ripples.length; i += 1) {
+      const ripple = ripples[i];
+      if (ripple.strength > 0) {
+        const age = currentTime - ripple.startTime;
+        if (age > RIPPLE_CONFIG.duration) {
+          ripple.strength = 0;
+          ripple.startTime = -1000;
+        }
+      }
+      const offset = i * 4;
+      rippleData[offset] = ripple.x;
+      rippleData[offset + 1] = ripple.y;
+      rippleData[offset + 2] = ripple.startTime;
+      rippleData[offset + 3] = ripple.strength;
+    }
     
     // Clear with transparent
     gl.clearColor(0, 0, 0, 0);
@@ -433,7 +698,11 @@
     // Set uniforms
     gl.uniform3f(uniforms.iResolution, canvas.width, canvas.height, 1);
     gl.uniform1f(uniforms.iTime, currentTime);
-    gl.uniform2f(uniforms.iMouse, mouseX, mouseY);
+    gl.uniform2f(uniforms.iMouse, pointer.smoothX, pointer.smoothY);
+    gl.uniform2f(uniforms.iVelocity, velX, velY);
+    gl.uniform1f(uniforms.iPointerStrength, pointerStrength);
+    gl.uniform1f(uniforms.iPointerRadius, pointerRadius);
+    gl.uniform4fv(uniforms.iRipples, rippleData);
     gl.uniform1i(uniforms.isDarkMode, isDarkMode ? 1 : 0);
     
     // Noise parameters (slowed down)
