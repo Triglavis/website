@@ -128,6 +128,7 @@
             const dispatchResize = () => window.dispatchEvent(new Event('resize'));
             const getCloseThreshold = () => scroll.clientHeight * 0.15;
             const isAtTop = () => scroll.scrollTop <= 0;
+            const getNearTop = () => scroll.scrollTop <= 4;
             const now = () => (window.performance ? performance.now() : Date.now());
             const stopInertia = () => {
                 if (!inertiaFrame) return;
@@ -389,21 +390,47 @@
                 const dt = Math.max(currentTime - (touchLastTime || currentTime), 0);
                 touchLastY = touch.clientY;
                 touchLastTime = currentTime;
+                const wantsResize = getNearTop() && ((delta > 0 && currentChinHeight < maxChinHeight) || (delta < 0 && currentChinHeight > minChinHeight) || (delta < 0 && currentChinHeight <= minChinHeight + 1));
+                let nextMode = touchMode;
+
                 if (touchMode === 'auto') {
-                    const wantsResize = isAtTop() && ((delta > 0 && currentChinHeight < maxChinHeight) || (delta < 0 && currentChinHeight > minChinHeight) || (delta < 0 && currentChinHeight <= minChinHeight + 1));
-                    touchMode = wantsResize ? 'manual' : 'native';
+                    nextMode = wantsResize ? 'manual' : 'native';
+                } else if (touchMode === 'native' && wantsResize) {
+                    nextMode = 'manual';
+                } else if (touchMode === 'manual' && touchInScroll && !wantsResize && currentChinHeight >= maxChinHeight && delta > 0) {
+                    nextMode = 'native';
+                }
+
+                if (nextMode !== touchMode) {
+                    touchMode = nextMode;
+                    touchLastY = touch.clientY;
+                    touchLastTime = currentTime;
+                    touchVelocity = 0;
+                    touchPrevented = false;
+                    return;
                 }
 
                 if (touchMode === 'manual') {
+                    let remaining = delta;
+                    const scrollTop = scroll.scrollTop;
+                    if (scrollTop > 0 && remaining < 0) {
+                        const consume = Math.min(scrollTop, Math.abs(remaining));
+                        isSyncingScroll = true;
+                        scroll.scrollTop = scrollTop - consume;
+                        requestAnimationFrame(() => {
+                            isSyncingScroll = false;
+                        });
+                        remaining += consume;
+                    }
                     if (dt > 0) {
-                        const velocity = delta / dt;
+                        const velocity = remaining / dt;
                         touchVelocity = touchVelocity * 0.75 + velocity * 0.25;
                     }
-                    const result = applyDelta(delta, { allowScroll: true });
-                    if (result.consumed) {
+                    if (remaining !== 0 || wantsResize) {
                         event.preventDefault();
                         touchPrevented = true;
                     }
+                    applyDelta(remaining, { allowScroll: !touchInScroll });
                 }
             }, { passive: false });
 
