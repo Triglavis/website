@@ -182,7 +182,9 @@
                     const prev = scroll.scrollTop;
                     isSyncingScroll = true;
                     scroll.scrollTop = prev + remaining;
-                    isSyncingScroll = false;
+                    requestAnimationFrame(() => {
+                        isSyncingScroll = false;
+                    });
                     const scrolled = scroll.scrollTop - prev;
                     if (scrolled !== 0) {
                         applied += scrolled;
@@ -329,11 +331,14 @@
 
             scroll.addEventListener('scroll', () => {
                 if (!app.classList.contains('privacy-open')) return;
+                if (touchLastY !== null || touchMode === 'manual') return;
                 if (!isSyncingScroll && currentChinHeight < maxChinHeight && scroll.scrollTop > 0) {
                     isSyncingScroll = true;
                     const delta = scroll.scrollTop;
                     scroll.scrollTop = 0;
-                    isSyncingScroll = false;
+                    requestAnimationFrame(() => {
+                        isSyncingScroll = false;
+                    });
                     applyDelta(delta);
                 }
             });

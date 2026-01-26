@@ -270,6 +270,7 @@ body {
   line-height: 1.5;
   color: hsl(var(--foreground));
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   user-select: text;
 }
 
