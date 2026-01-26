@@ -116,6 +116,9 @@
             let touchMode = null;
             let touchInScroll = false;
             let inertiaFrame = null;
+            let pendingDelta = 0;
+            let pendingAllowScroll = false;
+            let pendingFrame = null;
             let openingTimer = null;
             let snappingTimer = null;
             let minChinHeight = 0;
@@ -134,6 +137,31 @@
                 if (!inertiaFrame) return;
                 window.cancelAnimationFrame(inertiaFrame);
                 inertiaFrame = null;
+            };
+            const flushPendingDelta = () => {
+                if (!pendingFrame) return;
+                window.cancelAnimationFrame(pendingFrame);
+                pendingFrame = null;
+                if (pendingDelta !== 0) {
+                    applyDelta(pendingDelta, { allowScroll: pendingAllowScroll });
+                }
+                pendingDelta = 0;
+                pendingAllowScroll = false;
+            };
+            const schedulePendingDelta = () => {
+                if (pendingFrame) return;
+                pendingFrame = window.requestAnimationFrame(() => {
+                    pendingFrame = null;
+                    if (pendingDelta === 0) {
+                        pendingAllowScroll = false;
+                        return;
+                    }
+                    const delta = pendingDelta;
+                    const allowScroll = pendingAllowScroll;
+                    pendingDelta = 0;
+                    pendingAllowScroll = false;
+                    applyDelta(delta, { allowScroll });
+                });
             };
 
             const applyDelta = (deltaY, { allowScroll = false } = {}) => {
@@ -264,6 +292,7 @@
 
             const openDrawer = () => {
                 stopInertia();
+                flushPendingDelta();
                 touchLastY = null;
                 touchLastTime = null;
                 touchVelocity = 0;
@@ -291,6 +320,7 @@
 
             const closeDrawer = (opts = {}) => {
                 stopInertia();
+                flushPendingDelta();
                 touchLastY = null;
                 touchLastTime = null;
                 touchVelocity = 0;
@@ -430,7 +460,13 @@
                         event.preventDefault();
                         touchPrevented = true;
                     }
-                    applyDelta(remaining, { allowScroll: !touchInScroll });
+                    if (remaining !== 0) {
+                        pendingDelta += remaining;
+                        if (!touchInScroll) {
+                            pendingAllowScroll = true;
+                        }
+                        schedulePendingDelta();
+                    }
                 }
             }, { passive: false });
 
@@ -443,6 +479,7 @@
                     upPull = 0;
                     return;
                 }
+                flushPendingDelta();
                 if (touchPrevented && Math.abs(touchVelocity) > 0.02) {
                     const maxVelocity = 2;
                     const nextVelocity = clamp(touchVelocity, -maxVelocity, maxVelocity);

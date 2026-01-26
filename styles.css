@@ -141,6 +141,10 @@ body {
   padding: 6px;
 }
 
+.app-container.privacy-open .chin-area {
+  will-change: height;
+}
+
 /* Content area - main content with border radius */
 .content-area {
   flex: 1;
