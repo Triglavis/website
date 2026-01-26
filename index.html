@@ -110,6 +110,10 @@
 
             let upPull = 0;
             let touchLastY = null;
+            let touchLastTime = null;
+            let touchVelocity = 0;
+            let touchPrevented = false;
+            let inertiaFrame = null;
             let openingTimer = null;
             let snappingTimer = null;
             let minChinHeight = 0;
@@ -122,6 +126,104 @@
             const dispatchResize = () => window.dispatchEvent(new Event('resize'));
             const getCloseThreshold = () => scroll.clientHeight * 0.15;
             const isAtTop = () => scroll.scrollTop <= 0;
+            const now = () => (window.performance ? performance.now() : Date.now());
+            const stopInertia = () => {
+                if (!inertiaFrame) return;
+                window.cancelAnimationFrame(inertiaFrame);
+                inertiaFrame = null;
+            };
+
+            const applyDelta = (deltaY, { allowScroll = false } = {}) => {
+                if (!app.classList.contains('privacy-open') || !deltaY) {
+                    return { applied: 0, consumed: false };
+                }
+
+                let applied = 0;
+                let consumed = false;
+                const atTop = isAtTop();
+                let remaining = deltaY;
+
+                if (atTop && remaining > 0 && currentChinHeight < maxChinHeight) {
+                    const nextHeight = clamp(currentChinHeight + remaining, minChinHeight, maxChinHeight);
+                    const heightDelta = nextHeight - currentChinHeight;
+                    if (heightDelta !== 0) {
+                        setChinHeight(nextHeight);
+                        applied += heightDelta;
+                        consumed = true;
+                    }
+                    remaining -= heightDelta;
+                    upPull = 0;
+                }
+
+                if (atTop && remaining < 0 && currentChinHeight > minChinHeight) {
+                    const nextHeight = clamp(currentChinHeight + remaining, minChinHeight, maxChinHeight);
+                    const heightDelta = nextHeight - currentChinHeight;
+                    if (heightDelta !== 0) {
+                        setChinHeight(nextHeight);
+                        applied += heightDelta;
+                        consumed = true;
+                    }
+                    remaining -= heightDelta;
+                    upPull = 0;
+                }
+
+                if (atTop && remaining < 0 && currentChinHeight <= minChinHeight + 1) {
+                    upPull += Math.abs(remaining);
+                    consumed = true;
+                    if (upPull >= getCloseThreshold()) {
+                        closeDrawer({ snap: true });
+                    }
+                    remaining = 0;
+                }
+
+                if (remaining !== 0 && allowScroll) {
+                    const prev = scroll.scrollTop;
+                    isSyncingScroll = true;
+                    scroll.scrollTop = prev + remaining;
+                    isSyncingScroll = false;
+                    const scrolled = scroll.scrollTop - prev;
+                    if (scrolled !== 0) {
+                        applied += scrolled;
+                        consumed = true;
+                    }
+                }
+
+                if (deltaY > 0 || !isAtTop()) {
+                    upPull = 0;
+                }
+
+                return { applied, consumed };
+            };
+
+            const startInertia = (initialVelocity) => {
+                stopInertia();
+                let velocity = initialVelocity;
+                let lastTime = now();
+
+                const step = (timestamp) => {
+                    if (!app.classList.contains('privacy-open')) {
+                        stopInertia();
+                        return;
+                    }
+
+                    const frameTime = Math.min(timestamp - lastTime, 32);
+                    lastTime = timestamp;
+                    const delta = velocity * frameTime;
+                    const result = applyDelta(delta, { allowScroll: true });
+
+                    const decay = Math.pow(0.93, frameTime / 16.67);
+                    velocity *= decay;
+
+                    if (Math.abs(velocity) < 0.05 || Math.abs(result.applied) < 0.1) {
+                        stopInertia();
+                        return;
+                    }
+
+                    inertiaFrame = window.requestAnimationFrame(step);
+                };
+
+                inertiaFrame = window.requestAnimationFrame(step);
+            };
 
             const updateTargetHeights = () => {
                 const appRect = app.getBoundingClientRect();
@@ -156,6 +258,11 @@
             };
 
             const openDrawer = () => {
+                stopInertia();
+                touchLastY = null;
+                touchLastTime = null;
+                touchVelocity = 0;
+                touchPrevented = false;
                 updateTargetHeights();
                 app.classList.add('privacy-open');
                 app.classList.add('privacy-opening');
@@ -176,6 +283,11 @@
             };
 
             const closeDrawer = (opts = {}) => {
+                stopInertia();
+                touchLastY = null;
+                touchLastTime = null;
+                touchVelocity = 0;
+                touchPrevented = false;
                 app.classList.remove('privacy-open');
                 app.classList.remove('privacy-opening');
                 app.classList.remove('privacy-resizing');
@@ -215,93 +327,89 @@
                     isSyncingScroll = true;
                     const delta = scroll.scrollTop;
                     scroll.scrollTop = 0;
-                    setChinHeight(currentChinHeight + delta);
-                    upPull = 0;
                     isSyncingScroll = false;
-                    return;
+                    applyDelta(delta);
                 }
             });
 
-            scroll.addEventListener('wheel', (event) => {
+            const normalizeWheelDelta = (event) => {
+                if (!event) return 0;
+                if (event.deltaMode === 1) return event.deltaY * 16;
+                if (event.deltaMode === 2) return event.deltaY * scroll.clientHeight;
+                return event.deltaY;
+            };
+
+            app.addEventListener('wheel', (event) => {
                 if (!app.classList.contains('privacy-open')) return;
-                const deltaY = event.deltaY;
-                if (deltaY === 0) return;
-
-                if (deltaY > 0 && isAtTop() && currentChinHeight < maxChinHeight) {
+                stopInertia();
+                const deltaY = normalizeWheelDelta(event);
+                if (!deltaY) return;
+                const result = applyDelta(deltaY, { allowScroll: true });
+                if (result.consumed) {
                     event.preventDefault();
-                    setChinHeight(currentChinHeight + deltaY);
-                    upPull = 0;
-                    return;
-                }
-
-                if (deltaY < 0 && isAtTop() && currentChinHeight > minChinHeight) {
-                    event.preventDefault();
-                    setChinHeight(currentChinHeight + deltaY);
-                    upPull = 0;
-                    return;
-                }
-
-                if (deltaY < 0 && isAtTop() && currentChinHeight <= minChinHeight + 1) {
-                    event.preventDefault();
-                    upPull += Math.abs(deltaY);
-                    if (upPull >= getCloseThreshold()) {
-                        closeDrawer({ snap: true });
-                    }
-                    return;
-                }
-
-                if (deltaY > 0 || !isAtTop()) {
-                    upPull = 0;
                 }
             }, { passive: false });
 
-            scroll.addEventListener('touchstart', (event) => {
+            app.addEventListener('touchstart', (event) => {
                 if (!app.classList.contains('privacy-open')) return;
+                stopInertia();
                 const touch = event.touches[0];
                 if (!touch) return;
                 touchLastY = touch.clientY;
+                touchLastTime = now();
+                touchVelocity = 0;
+                touchPrevented = false;
                 upPull = 0;
             }, { passive: true });
 
-            scroll.addEventListener('touchmove', (event) => {
+            app.addEventListener('touchmove', (event) => {
                 if (!app.classList.contains('privacy-open')) return;
                 const touch = event.touches[0];
                 if (!touch) return;
+                const currentTime = now();
                 if (touchLastY == null) {
                     touchLastY = touch.clientY;
+                    touchLastTime = currentTime;
                     return;
                 }
                 const delta = touchLastY - touch.clientY;
+                const dt = Math.max(currentTime - (touchLastTime || currentTime), 0);
                 touchLastY = touch.clientY;
-                if (delta > 0 && isAtTop() && currentChinHeight < maxChinHeight) {
-                    event.preventDefault();
-                    setChinHeight(currentChinHeight + delta);
-                    upPull = 0;
-                    return;
+                touchLastTime = currentTime;
+                if (dt > 0) {
+                    const velocity = delta / dt;
+                    touchVelocity = touchVelocity * 0.75 + velocity * 0.25;
                 }
-                if (delta < 0 && isAtTop() && currentChinHeight > minChinHeight) {
+                const result = applyDelta(delta, { allowScroll: true });
+                if (result.consumed) {
                     event.preventDefault();
-                    setChinHeight(currentChinHeight + delta);
-                    upPull = 0;
-                    return;
-                }
-                if (delta < 0 && isAtTop() && currentChinHeight <= minChinHeight + 1) {
-                    event.preventDefault();
-                    upPull += Math.abs(delta);
-                    if (upPull >= getCloseThreshold()) {
-                        closeDrawer({ snap: true });
-                    }
-                    return;
-                }
-                if (delta > 0 || !isAtTop()) {
-                    upPull = 0;
+                    touchPrevented = true;
                 }
             }, { passive: false });
 
-            scroll.addEventListener('touchend', () => {
+            const endTouch = () => {
+                if (!app.classList.contains('privacy-open')) {
+                    touchLastY = null;
+                    touchLastTime = null;
+                    touchVelocity = 0;
+                    touchPrevented = false;
+                    upPull = 0;
+                    return;
+                }
+                if (touchPrevented && Math.abs(touchVelocity) > 0.02) {
+                    const maxVelocity = 2;
+                    const nextVelocity = clamp(touchVelocity, -maxVelocity, maxVelocity);
+                    startInertia(nextVelocity);
+                }
                 touchLastY = null;
+                touchLastTime = null;
+                touchVelocity = 0;
+                touchPrevented = false;
                 upPull = 0;
-            }, { passive: true });
+            };
+
+            app.addEventListener('touchend', endTouch, { passive: true });
+            app.addEventListener('touchcancel', endTouch, { passive: true });
 
             updateTargetHeights();
             window.addEventListener('resize', updateTargetHeights);
