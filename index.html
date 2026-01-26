@@ -29,12 +29,284 @@
                     <span class="copyright-text">© 2026 <a href="/" style="color: inherit; text-decoration: none;">Triglavis LLC</a>™</span>
                 </div>
                 <div class="copyright-right">
-                    <a href="/privacy.html" class="copyright-contact">Privacy Policy</a>
+                    <a href="/privacy.html" class="copyright-contact js-privacy-toggle" aria-expanded="false" aria-controls="privacyDrawer">Privacy Policy</a>
                     <a href="mailto:support@triglavis.com" class="copyright-contact">Contact</a>
+                </div>
+            </div>
+            <div class="privacy-drawer" id="privacyDrawer" aria-hidden="true">
+                <div class="privacy-scroll" id="privacyScroll" role="region" aria-label="Triglavis LLC Privacy Policy">
+                    <div class="privacy-content">
+                    <div class="privacy-header">
+                        <img src="triglavis.svg" alt="Triglavis Logo" class="privacy-logo">
+                        <h1 class="privacy-title">Triglavis LLC Privacy Policy</h1>
+                    </div>
+                    <p class="last-updated">Last Updated: January 26, 2026</p>
+                    <h2>Overview</h2>
+                    <p>Triglavis LLC operates the Triglavis website. We are committed to protecting your privacy. This privacy policy applies to this website and its analytics. Individual apps we distribute may have separate privacy policies.</p>
+                    <h2>Information We Collect</h2>
+                    <p><strong>We collect minimal information on this website.</strong> We may collect information in these limited circumstances:</p>
+                    <ul>
+                        <li>Contact information when you reach out for support via phone or email</li>
+                        <li>Information you voluntarily provide when contacting us for business inquiries</li>
+                        <li>Website usage analytics (e.g., page views and basic request metadata) collected via Cloudflare Web Analytics</li>
+                    </ul>
+                    <p>Individual apps we distribute may have their own privacy policies, which will be disclosed separately if they differ from this policy.</p>
+                    <h2>How We Use Your Information</h2>
+                    <p>When we do collect information, we use it only to:</p>
+                    <ul>
+                        <li>Respond to your support requests and inquiries</li>
+                        <li>Send communications you've explicitly requested</li>
+                        <li>Measure site traffic and improve performance</li>
+                        <li>Comply with legal obligations</li>
+                    </ul>
+                    <h2>Information Sharing</h2>
+                    <p>We do not sell, trade, or otherwise transfer your personal information to third parties except:</p>
+                    <ul>
+                        <li>With your explicit consent</li>
+                        <li>To trusted service providers who assist in operating our platform</li>
+                        <li>When required by law or to protect our rights</li>
+                        <li>In connection with a merger, acquisition, or sale of assets</li>
+                    </ul>
+                    <h2>Data Security</h2>
+                    <p>Since we collect minimal information, your privacy is protected by design. When we do handle information:</p>
+                    <ul>
+                        <li>Support communications are kept confidential</li>
+                        <li>Analytics data is handled by Cloudflare Web Analytics</li>
+                        <li>Access to any collected information is strictly limited</li>
+                    </ul>
+                    <h2>Data Retention</h2>
+                    <p>We retain minimal information only as long as necessary to fulfill the purposes outlined in this policy, comply with legal obligations, or resolve disputes.</p>
+                    <h2>Your Rights</h2>
+                    <p>You have the right to:</p>
+                    <ul>
+                        <li>Access and update your account information</li>
+                        <li>Request deletion of your personal data</li>
+                        <li>Opt out of certain communications</li>
+                        <li>Request a copy of your data</li>
+                    </ul>
+                    <h2>Third-Party Services</h2>
+                    <p>Our products and services may integrate with third-party services. This privacy policy does not cover the practices of third parties. We encourage you to read their privacy policies. This includes Cloudflare Web Analytics.</p>
+                    <h2>Changes to This Policy</h2>
+                    <p>We may update this privacy policy periodically. We will notify you of any material changes by posting the new policy on this page and updating the "Last Updated" date.</p>
+                    <h2>Contact Us</h2>
+                    <p>If you have questions about this privacy policy or our privacy practices, please contact us:</p>
+                    <ul>
+                        <li>Email: <a href="mailto:support@triglavis.com">support@triglavis.com</a></li>
+                        <li>Website: <a href="https://triglavis.com" target="_blank">triglavis.com</a></li>
+                    </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    <script>
+        (() => {
+            const app = document.querySelector('.app-container');
+            const toggle = document.querySelector('.js-privacy-toggle');
+            const drawer = document.getElementById('privacyDrawer');
+            const scroll = document.getElementById('privacyScroll');
+
+            if (!app || !toggle || !drawer || !scroll) return;
+
+            let upPull = 0;
+            let touchLastY = null;
+            let openingTimer = null;
+            let snappingTimer = null;
+            let minChinHeight = 0;
+            let maxChinHeight = 0;
+            let currentChinHeight = 0;
+            let isSyncingScroll = false;
+            let resizeTimer = null;
+
+            const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+            const dispatchResize = () => window.dispatchEvent(new Event('resize'));
+            const getCloseThreshold = () => scroll.clientHeight * 0.15;
+            const isAtTop = () => scroll.scrollTop <= 0;
+
+            const updateTargetHeights = () => {
+                const appRect = app.getBoundingClientRect();
+                const appStyles = window.getComputedStyle(app);
+                const barHeight = parseFloat(appStyles.getPropertyValue('--chin-bar-height')) || 30;
+                const paddingY = (parseFloat(appStyles.paddingTop) || 0) + (parseFloat(appStyles.paddingBottom) || 0);
+                const availableHeight = appRect.height > 0 ? appRect.height - paddingY : window.innerHeight || 1;
+                let nextMax = clamp(availableHeight * 0.75, 320, 900);
+                let nextMin = barHeight + (nextMax - barHeight) / 6;
+                nextMin = clamp(nextMin, 120, nextMax - 120);
+                minChinHeight = nextMin;
+                maxChinHeight = nextMax;
+                app.style.setProperty('--privacy-open-height', `${Math.round(nextMin)}px`);
+                app.style.setProperty('--privacy-open-max', `${Math.round(nextMax)}px`);
+                if (app.classList.contains('privacy-open')) {
+                    if (!currentChinHeight) {
+                        currentChinHeight = nextMin;
+                    }
+                    currentChinHeight = clamp(currentChinHeight, minChinHeight, maxChinHeight);
+                    app.style.setProperty('--chin-height', `${Math.round(currentChinHeight)}px`);
+                }
+            };
+
+            const setChinHeight = (nextHeight) => {
+                currentChinHeight = clamp(nextHeight, minChinHeight, maxChinHeight);
+                app.style.setProperty('--chin-height', `${Math.round(currentChinHeight)}px`);
+                app.classList.add('privacy-resizing');
+                if (resizeTimer) window.clearTimeout(resizeTimer);
+                resizeTimer = window.setTimeout(() => {
+                    app.classList.remove('privacy-resizing');
+                }, 120);
+            };
+
+            const openDrawer = () => {
+                updateTargetHeights();
+                app.classList.add('privacy-open');
+                app.classList.add('privacy-opening');
+                app.classList.remove('privacy-snapping');
+                app.classList.remove('privacy-resizing');
+                toggle.setAttribute('aria-expanded', 'true');
+                drawer.setAttribute('aria-hidden', 'false');
+                upPull = 0;
+                currentChinHeight = minChinHeight;
+                app.style.setProperty('--chin-height', `${Math.round(currentChinHeight)}px`);
+                if (openingTimer) window.clearTimeout(openingTimer);
+                if (snappingTimer) window.clearTimeout(snappingTimer);
+                openingTimer = window.setTimeout(() => {
+                    app.classList.remove('privacy-opening');
+                }, 650);
+                scroll.scrollTop = 0;
+                requestAnimationFrame(dispatchResize);
+            };
+
+            const closeDrawer = (opts = {}) => {
+                app.classList.remove('privacy-open');
+                app.classList.remove('privacy-opening');
+                app.classList.remove('privacy-resizing');
+                if (resizeTimer) window.clearTimeout(resizeTimer);
+                if (openingTimer) window.clearTimeout(openingTimer);
+                if (opts.snap) {
+                    app.classList.add('privacy-snapping');
+                    if (snappingTimer) window.clearTimeout(snappingTimer);
+                    snappingTimer = window.setTimeout(() => {
+                        app.classList.remove('privacy-snapping');
+                    }, 350);
+                }
+                toggle.setAttribute('aria-expanded', 'false');
+                drawer.setAttribute('aria-hidden', 'true');
+                upPull = 0;
+                scroll.scrollTop = 0;
+                currentChinHeight = 0;
+                app.style.removeProperty('--chin-height');
+                requestAnimationFrame(dispatchResize);
+            };
+
+            toggle.addEventListener('click', (event) => {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (typeof event.button === 'number' && event.button !== 0)) {
+                    return;
+                }
+                event.preventDefault();
+                if (app.classList.contains('privacy-open')) {
+                    closeDrawer({ snap: true });
+                    return;
+                }
+                openDrawer();
+            });
+
+            scroll.addEventListener('scroll', () => {
+                if (!app.classList.contains('privacy-open')) return;
+                if (!isSyncingScroll && currentChinHeight < maxChinHeight && scroll.scrollTop > 0) {
+                    isSyncingScroll = true;
+                    const delta = scroll.scrollTop;
+                    scroll.scrollTop = 0;
+                    setChinHeight(currentChinHeight + delta);
+                    upPull = 0;
+                    isSyncingScroll = false;
+                    return;
+                }
+            });
+
+            scroll.addEventListener('wheel', (event) => {
+                if (!app.classList.contains('privacy-open')) return;
+                const deltaY = event.deltaY;
+                if (deltaY === 0) return;
+
+                if (deltaY > 0 && isAtTop() && currentChinHeight < maxChinHeight) {
+                    event.preventDefault();
+                    setChinHeight(currentChinHeight + deltaY);
+                    upPull = 0;
+                    return;
+                }
+
+                if (deltaY < 0 && isAtTop() && currentChinHeight > minChinHeight) {
+                    event.preventDefault();
+                    setChinHeight(currentChinHeight + deltaY);
+                    upPull = 0;
+                    return;
+                }
+
+                if (deltaY < 0 && isAtTop() && currentChinHeight <= minChinHeight + 1) {
+                    event.preventDefault();
+                    upPull += Math.abs(deltaY);
+                    if (upPull >= getCloseThreshold()) {
+                        closeDrawer({ snap: true });
+                    }
+                    return;
+                }
+
+                if (deltaY > 0 || !isAtTop()) {
+                    upPull = 0;
+                }
+            }, { passive: false });
+
+            scroll.addEventListener('touchstart', (event) => {
+                if (!app.classList.contains('privacy-open')) return;
+                const touch = event.touches[0];
+                if (!touch) return;
+                touchLastY = touch.clientY;
+                upPull = 0;
+            }, { passive: true });
+
+            scroll.addEventListener('touchmove', (event) => {
+                if (!app.classList.contains('privacy-open')) return;
+                const touch = event.touches[0];
+                if (!touch) return;
+                if (touchLastY == null) {
+                    touchLastY = touch.clientY;
+                    return;
+                }
+                const delta = touchLastY - touch.clientY;
+                touchLastY = touch.clientY;
+                if (delta > 0 && isAtTop() && currentChinHeight < maxChinHeight) {
+                    event.preventDefault();
+                    setChinHeight(currentChinHeight + delta);
+                    upPull = 0;
+                    return;
+                }
+                if (delta < 0 && isAtTop() && currentChinHeight > minChinHeight) {
+                    event.preventDefault();
+                    setChinHeight(currentChinHeight + delta);
+                    upPull = 0;
+                    return;
+                }
+                if (delta < 0 && isAtTop() && currentChinHeight <= minChinHeight + 1) {
+                    event.preventDefault();
+                    upPull += Math.abs(delta);
+                    if (upPull >= getCloseThreshold()) {
+                        closeDrawer({ snap: true });
+                    }
+                    return;
+                }
+                if (delta > 0 || !isAtTop()) {
+                    upPull = 0;
+                }
+            }, { passive: false });
+
+            scroll.addEventListener('touchend', () => {
+                touchLastY = null;
+                upPull = 0;
+            }, { passive: true });
+
+            updateTargetHeights();
+            window.addEventListener('resize', updateTargetHeights);
+        })();
+    </script>
     <script src="gradient-background.js?v=20260126"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4741e2cbd24343ff8a9688436ea53d68"}'></script>

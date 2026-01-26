@@ -4,6 +4,7 @@
   let uniforms = {};
   let startTime = Date.now();
   let animationId = null;
+  let resizeRafId = null;
   let isDarkMode = true; // Always use dark mode
 
   const POINTER_INTERACTION = {
@@ -488,7 +489,7 @@
       }, { passive: true });
     }
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', requestResize);
     window.addEventListener('blur', handlePointerLeave);
     
     // Always use dark mode
@@ -510,12 +511,32 @@
     return (Date.now() - startTime) * 0.001;
   }
 
-  function normalizePointer(clientX, clientY) {
-    const width = window.innerWidth || 1;
-    const height = window.innerHeight || 1;
+  function getContentBounds() {
+    const contentArea = document.querySelector('.content-area');
+    if (!contentArea) {
+      return {
+        left: 0,
+        top: 0,
+        width: window.innerWidth || 1,
+        height: window.innerHeight || 1
+      };
+    }
+    const rect = contentArea.getBoundingClientRect();
     return {
-      x: clamp(clientX / width, 0, 1),
-      y: clamp(1 - clientY / height, 0, 1)
+      left: rect.left,
+      top: rect.top,
+      width: rect.width || window.innerWidth || 1,
+      height: rect.height || window.innerHeight || 1
+    };
+  }
+
+  function normalizePointer(clientX, clientY) {
+    const bounds = getContentBounds();
+    const width = bounds.width || 1;
+    const height = bounds.height || 1;
+    return {
+      x: clamp((clientX - bounds.left) / width, 0, 1),
+      y: clamp(1 - (clientY - bounds.top) / height, 0, 1)
     };
   }
 
@@ -604,17 +625,35 @@
     pointer.speed = 0;
   }
 
+  function requestResize() {
+    if (resizeRafId != null) {
+      return;
+    }
+    resizeRafId = requestAnimationFrame(() => {
+      resizeRafId = null;
+      handleResize();
+    });
+  }
+
   function handleResize() {
     if (!canvas || !gl) return;
     
     const dpr = window.devicePixelRatio || 1;
-    
-    // Use window dimensions directly for full viewport coverage
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+
+    const app = document.querySelector('.app-container');
+    const appRect = app ? app.getBoundingClientRect() : null;
+    const appStyles = app ? window.getComputedStyle(app) : null;
+    const paddingX = appStyles
+      ? (parseFloat(appStyles.paddingLeft) || 0) + (parseFloat(appStyles.paddingRight) || 0)
+      : 0;
+    const paddingY = appStyles
+      ? (parseFloat(appStyles.paddingTop) || 0) + (parseFloat(appStyles.paddingBottom) || 0)
+      : 0;
+    const width = appRect ? appRect.width - paddingX : window.innerWidth;
+    const height = appRect ? appRect.height - paddingY : window.innerHeight;
     
     // Check if we got valid dimensions
-    if (width === 0 || height === 0) {
+    if (width <= 0 || height <= 0) {
       console.warn('Window has zero dimensions, retrying...');
       setTimeout(handleResize, 100);
       return;
@@ -668,7 +707,7 @@
       pointerRadius = POINTER_INTERACTION.radius * (0.9 + speedStrength * 0.25);
     }
 
-    const aspect = (window.innerWidth || 1) / Math.max(window.innerHeight || 1, 1);
+    const aspect = canvas ? canvas.width / Math.max(canvas.height, 1) : (window.innerWidth || 1) / Math.max(window.innerHeight || 1, 1);
     const velocityScale = pointerStrength > 0 ? 1 : 0;
     const velX = pointer.smoothVx * aspect * velocityScale;
     const velY = pointer.smoothVy * velocityScale;
