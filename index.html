@@ -113,7 +113,12 @@
             let touchLastTime = null;
             let touchVelocity = 0;
             let touchPrevented = false;
+            let touchMode = null;
+            let touchInScroll = false;
             let inertiaFrame = null;
+            let pendingDelta = 0;
+            let pendingAllowScroll = false;
+            let pendingFrame = null;
             let openingTimer = null;
             let snappingTimer = null;
             let minChinHeight = 0;
@@ -126,11 +131,37 @@
             const dispatchResize = () => window.dispatchEvent(new Event('resize'));
             const getCloseThreshold = () => scroll.clientHeight * 0.15;
             const isAtTop = () => scroll.scrollTop <= 0;
+            const getNearTop = () => scroll.scrollTop <= 4;
             const now = () => (window.performance ? performance.now() : Date.now());
             const stopInertia = () => {
                 if (!inertiaFrame) return;
                 window.cancelAnimationFrame(inertiaFrame);
                 inertiaFrame = null;
+            };
+            const flushPendingDelta = () => {
+                if (!pendingFrame) return;
+                window.cancelAnimationFrame(pendingFrame);
+                pendingFrame = null;
+                if (pendingDelta !== 0) {
+                    applyDelta(pendingDelta, { allowScroll: pendingAllowScroll });
+                }
+                pendingDelta = 0;
+                pendingAllowScroll = false;
+            };
+            const schedulePendingDelta = () => {
+                if (pendingFrame) return;
+                pendingFrame = window.requestAnimationFrame(() => {
+                    pendingFrame = null;
+                    if (pendingDelta === 0) {
+                        pendingAllowScroll = false;
+                        return;
+                    }
+                    const delta = pendingDelta;
+                    const allowScroll = pendingAllowScroll;
+                    pendingDelta = 0;
+                    pendingAllowScroll = false;
+                    applyDelta(delta, { allowScroll });
+                });
             };
 
             const applyDelta = (deltaY, { allowScroll = false } = {}) => {
@@ -180,7 +211,9 @@
                     const prev = scroll.scrollTop;
                     isSyncingScroll = true;
                     scroll.scrollTop = prev + remaining;
-                    isSyncingScroll = false;
+                    requestAnimationFrame(() => {
+                        isSyncingScroll = false;
+                    });
                     const scrolled = scroll.scrollTop - prev;
                     if (scrolled !== 0) {
                         applied += scrolled;
@@ -259,10 +292,13 @@
 
             const openDrawer = () => {
                 stopInertia();
+                flushPendingDelta();
                 touchLastY = null;
                 touchLastTime = null;
                 touchVelocity = 0;
                 touchPrevented = false;
+                touchMode = null;
+                touchInScroll = false;
                 updateTargetHeights();
                 app.classList.add('privacy-open');
                 app.classList.add('privacy-opening');
@@ -284,10 +320,13 @@
 
             const closeDrawer = (opts = {}) => {
                 stopInertia();
+                flushPendingDelta();
                 touchLastY = null;
                 touchLastTime = null;
                 touchVelocity = 0;
                 touchPrevented = false;
+                touchMode = null;
+                touchInScroll = false;
                 app.classList.remove('privacy-open');
                 app.classList.remove('privacy-opening');
                 app.classList.remove('privacy-resizing');
@@ -323,11 +362,14 @@
 
             scroll.addEventListener('scroll', () => {
                 if (!app.classList.contains('privacy-open')) return;
+                if (touchLastY !== null || touchMode === 'manual') return;
                 if (!isSyncingScroll && currentChinHeight < maxChinHeight && scroll.scrollTop > 0) {
                     isSyncingScroll = true;
                     const delta = scroll.scrollTop;
                     scroll.scrollTop = 0;
-                    isSyncingScroll = false;
+                    requestAnimationFrame(() => {
+                        isSyncingScroll = false;
+                    });
                     applyDelta(delta);
                 }
             });
@@ -359,6 +401,8 @@
                 touchLastTime = now();
                 touchVelocity = 0;
                 touchPrevented = false;
+                touchInScroll = scroll.contains(event.target);
+                touchMode = touchInScroll ? 'auto' : 'manual';
                 upPull = 0;
             }, { passive: true });
 
@@ -376,14 +420,53 @@
                 const dt = Math.max(currentTime - (touchLastTime || currentTime), 0);
                 touchLastY = touch.clientY;
                 touchLastTime = currentTime;
-                if (dt > 0) {
-                    const velocity = delta / dt;
-                    touchVelocity = touchVelocity * 0.75 + velocity * 0.25;
+                const wantsResize = getNearTop() && ((delta > 0 && currentChinHeight < maxChinHeight) || (delta < 0 && currentChinHeight > minChinHeight) || (delta < 0 && currentChinHeight <= minChinHeight + 1));
+                let nextMode = touchMode;
+
+                if (touchMode === 'auto') {
+                    nextMode = wantsResize ? 'manual' : 'native';
+                } else if (touchMode === 'native' && wantsResize) {
+                    nextMode = 'manual';
+                } else if (touchMode === 'manual' && touchInScroll && !wantsResize && currentChinHeight >= maxChinHeight && delta > 0) {
+                    nextMode = 'native';
                 }
-                const result = applyDelta(delta, { allowScroll: true });
-                if (result.consumed) {
-                    event.preventDefault();
-                    touchPrevented = true;
+
+                if (nextMode !== touchMode) {
+                    touchMode = nextMode;
+                    touchLastY = touch.clientY;
+                    touchLastTime = currentTime;
+                    touchVelocity = 0;
+                    touchPrevented = false;
+                    return;
+                }
+
+                if (touchMode === 'manual') {
+                    let remaining = delta;
+                    const scrollTop = scroll.scrollTop;
+                    if (scrollTop > 0 && remaining < 0) {
+                        const consume = Math.min(scrollTop, Math.abs(remaining));
+                        isSyncingScroll = true;
+                        scroll.scrollTop = scrollTop - consume;
+                        requestAnimationFrame(() => {
+                            isSyncingScroll = false;
+                        });
+                        remaining += consume;
+                    }
+                    if (dt > 0) {
+                        const velocity = remaining / dt;
+                        touchVelocity = touchVelocity * 0.75 + velocity * 0.25;
+                    }
+                    if (remaining !== 0 || wantsResize) {
+                        event.preventDefault();
+                        touchPrevented = true;
+                    }
+                    if (remaining !== 0) {
+                        pendingDelta += remaining;
+                        if (!touchInScroll) {
+                            pendingAllowScroll = true;
+                        }
+                        schedulePendingDelta();
+                    }
                 }
             }, { passive: false });
 
@@ -396,6 +479,7 @@
                     upPull = 0;
                     return;
                 }
+                flushPendingDelta();
                 if (touchPrevented && Math.abs(touchVelocity) > 0.02) {
                     const maxVelocity = 2;
                     const nextVelocity = clamp(touchVelocity, -maxVelocity, maxVelocity);
@@ -405,6 +489,8 @@
                 touchLastTime = null;
                 touchVelocity = 0;
                 touchPrevented = false;
+                touchMode = null;
+                touchInScroll = false;
                 upPull = 0;
             };
 

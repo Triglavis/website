@@ -141,6 +141,10 @@ body {
   padding: 6px;
 }
 
+.app-container.privacy-open .chin-area {
+  will-change: height;
+}
+
 /* Content area - main content with border radius */
 .content-area {
   flex: 1;
@@ -270,6 +274,7 @@ body {
   line-height: 1.5;
   color: hsl(var(--foreground));
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   user-select: text;
 }
 
