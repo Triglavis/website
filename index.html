@@ -113,6 +113,8 @@
             let touchLastTime = null;
             let touchVelocity = 0;
             let touchPrevented = false;
+            let touchMode = null;
+            let touchInScroll = false;
             let inertiaFrame = null;
             let openingTimer = null;
             let snappingTimer = null;
@@ -263,6 +265,8 @@
                 touchLastTime = null;
                 touchVelocity = 0;
                 touchPrevented = false;
+                touchMode = null;
+                touchInScroll = false;
                 updateTargetHeights();
                 app.classList.add('privacy-open');
                 app.classList.add('privacy-opening');
@@ -288,6 +292,8 @@
                 touchLastTime = null;
                 touchVelocity = 0;
                 touchPrevented = false;
+                touchMode = null;
+                touchInScroll = false;
                 app.classList.remove('privacy-open');
                 app.classList.remove('privacy-opening');
                 app.classList.remove('privacy-resizing');
@@ -359,6 +365,8 @@
                 touchLastTime = now();
                 touchVelocity = 0;
                 touchPrevented = false;
+                touchInScroll = scroll.contains(event.target);
+                touchMode = touchInScroll ? 'auto' : 'manual';
                 upPull = 0;
             }, { passive: true });
 
@@ -376,14 +384,21 @@
                 const dt = Math.max(currentTime - (touchLastTime || currentTime), 0);
                 touchLastY = touch.clientY;
                 touchLastTime = currentTime;
-                if (dt > 0) {
-                    const velocity = delta / dt;
-                    touchVelocity = touchVelocity * 0.75 + velocity * 0.25;
+                if (touchMode === 'auto') {
+                    const wantsResize = isAtTop() && ((delta > 0 && currentChinHeight < maxChinHeight) || (delta < 0 && currentChinHeight > minChinHeight) || (delta < 0 && currentChinHeight <= minChinHeight + 1));
+                    touchMode = wantsResize ? 'manual' : 'native';
                 }
-                const result = applyDelta(delta, { allowScroll: true });
-                if (result.consumed) {
-                    event.preventDefault();
-                    touchPrevented = true;
+
+                if (touchMode === 'manual') {
+                    if (dt > 0) {
+                        const velocity = delta / dt;
+                        touchVelocity = touchVelocity * 0.75 + velocity * 0.25;
+                    }
+                    const result = applyDelta(delta, { allowScroll: true });
+                    if (result.consumed) {
+                        event.preventDefault();
+                        touchPrevented = true;
+                    }
                 }
             }, { passive: false });
 
@@ -405,6 +420,8 @@
                 touchLastTime = null;
                 touchVelocity = 0;
                 touchPrevented = false;
+                touchMode = null;
+                touchInScroll = false;
                 upPull = 0;
             };
 
