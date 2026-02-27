@@ -7,6 +7,8 @@
   --muted-foreground: 0 0% 65%;
   --border: 0 0% 15%;
   --radius: 0.5rem;
+  --logo-size-default: 200px;
+  --logo-size-min: 100px;
 }
 
 * {
@@ -70,8 +72,8 @@ body {
 }
 
 .logo {
-  width: 200px;
-  height: 200px;
+  width: var(--logo-size, var(--logo-size-default));
+  height: var(--logo-size, var(--logo-size-default));
   filter: drop-shadow(0 15px 36px rgba(0, 0, 0, 0.45));
   display: block;
 }
@@ -86,9 +88,8 @@ body {
 }
 
 @media (max-width: 768px) {
-  .logo {
-    width: 150px;
-    height: 150px;
+  :root {
+    --logo-size-default: 150px;
   }
   
   .company-name {
@@ -97,9 +98,8 @@ body {
 }
 
 @media (max-width: 480px) {
-  .logo {
-    width: 120px;
-    height: 120px;
+  :root {
+    --logo-size-default: 120px;
   }
   
   .company-name {
@@ -125,6 +125,7 @@ body {
   --chin-height: var(--chin-bar-height);
   --privacy-open-height: clamp(120px, 16.7vh, 240px);
   --privacy-open-max: clamp(320px, 75vh, 900px);
+  --content-min-height: 150px;
   position: fixed;
   top: 0;
   left: 0;

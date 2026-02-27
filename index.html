@@ -177,6 +177,11 @@
             let isSyncingScroll = false;
             let resizeTimer = null;
             let activePanel = 'privacy';
+            let availableHeight = 0;
+            let chinBarHeight = 30;
+            let contentMinHeight = 150;
+            let logoSizeDefault = 200;
+            let logoSizeMin = 100;
 
             const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
             const dispatchResize = () => window.dispatchEvent(new Event('resize'));
@@ -209,6 +214,20 @@
                     scroll.setAttribute('aria-label', label);
                 }
                 syncToggleState();
+            };
+            const updateLogoSize = () => {
+                const totalHeight = availableHeight || (app.getBoundingClientRect().height || window.innerHeight || 1);
+                const barHeight = chinBarHeight || 30;
+                const maxContentHeight = Math.max(contentMinHeight + 1, totalHeight - barHeight);
+                const minContentHeight = Math.min(contentMinHeight, maxContentHeight - 1);
+                const chinHeight = app.classList.contains('privacy-open')
+                    ? (currentChinHeight || minChinHeight || barHeight)
+                    : barHeight;
+                const currentContentHeight = totalHeight - chinHeight;
+                const range = Math.max(maxContentHeight - minContentHeight, 1);
+                const progress = clamp((maxContentHeight - currentContentHeight) / range, 0, 1);
+                const nextLogoSize = clamp(logoSizeDefault + (logoSizeMin - logoSizeDefault) * progress, logoSizeMin, logoSizeDefault);
+                app.style.setProperty('--logo-size', `${Math.round(nextLogoSize)}px`);
             };
             const stopInertia = () => {
                 if (!inertiaFrame) return;
@@ -339,11 +358,22 @@
                 const appRect = app.getBoundingClientRect();
                 const appStyles = window.getComputedStyle(app);
                 const barHeight = parseFloat(appStyles.getPropertyValue('--chin-bar-height')) || 30;
+                const targetContentMin = parseFloat(appStyles.getPropertyValue('--content-min-height')) || 150;
+                const targetLogoDefault = parseFloat(appStyles.getPropertyValue('--logo-size-default')) || 200;
+                const targetLogoMin = parseFloat(appStyles.getPropertyValue('--logo-size-min')) || 100;
                 const paddingY = (parseFloat(appStyles.paddingTop) || 0) + (parseFloat(appStyles.paddingBottom) || 0);
-                const availableHeight = appRect.height > 0 ? appRect.height - paddingY : window.innerHeight || 1;
-                let nextMax = clamp(availableHeight * 0.75, 320, 900);
-                let nextMin = barHeight + (nextMax - barHeight) / 6;
-                nextMin = clamp(nextMin, 120, nextMax - 120);
+                availableHeight = appRect.height > 0 ? appRect.height - paddingY : window.innerHeight || 1;
+                chinBarHeight = barHeight;
+                contentMinHeight = targetContentMin;
+                logoSizeDefault = targetLogoDefault;
+                logoSizeMin = targetLogoMin;
+                const maxChinFromContent = Math.max(barHeight + 40, availableHeight - contentMinHeight);
+                const maxChinFloor = Math.max(barHeight + 40, 120);
+                let nextMax = clamp(maxChinFromContent, maxChinFloor, 900);
+                const minOpenFloor = Math.max(barHeight + 18, 100);
+                const minOpenCeiling = Math.max(minOpenFloor, nextMax - 80);
+                let nextMin = clamp(barHeight + (nextMax - barHeight) / 6, minOpenFloor, minOpenCeiling);
+                nextMin = clamp(nextMin, barHeight + 16, nextMax);
                 minChinHeight = nextMin;
                 maxChinHeight = nextMax;
                 app.style.setProperty('--privacy-open-height', `${Math.round(nextMin)}px`);
@@ -355,11 +385,13 @@
                     currentChinHeight = clamp(currentChinHeight, minChinHeight, maxChinHeight);
                     app.style.setProperty('--chin-height', `${Math.round(currentChinHeight)}px`);
                 }
+                updateLogoSize();
             };
 
             const setChinHeight = (nextHeight) => {
                 currentChinHeight = clamp(nextHeight, minChinHeight, maxChinHeight);
                 app.style.setProperty('--chin-height', `${Math.round(currentChinHeight)}px`);
+                updateLogoSize();
                 app.classList.add('privacy-resizing');
                 if (resizeTimer) window.clearTimeout(resizeTimer);
                 resizeTimer = window.setTimeout(() => {
@@ -386,6 +418,7 @@
                 upPull = 0;
                 currentChinHeight = minChinHeight;
                 app.style.setProperty('--chin-height', `${Math.round(currentChinHeight)}px`);
+                updateLogoSize();
                 if (openingTimer) window.clearTimeout(openingTimer);
                 if (snappingTimer) window.clearTimeout(snappingTimer);
                 openingTimer = window.setTimeout(() => {
@@ -422,6 +455,7 @@
                 scroll.scrollTop = 0;
                 currentChinHeight = 0;
                 app.style.removeProperty('--chin-height');
+                updateLogoSize();
                 requestAnimationFrame(dispatchResize);
             };
 
