@@ -342,6 +342,45 @@ body {
   opacity: 1;
 }
 
+.investor-callouts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 12px 0 8px;
+}
+
+.investor-callout {
+  background: #fff;
+  color: #000;
+  border-radius: 6px;
+  padding: 12px 12px 10px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.investor-callout-number {
+  font-family: 'Söhne Breit', 'Inter', sans-serif;
+  font-size: clamp(22px, 3.2vw, 36px);
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.investor-callout-label {
+  margin-top: 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.72);
+}
+
+.investor-callouts-note {
+  margin-bottom: 12px;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.8;
+  font-size: 11px;
+}
+
 @media (min-width: 900px) {
   .privacy-scroll {
     padding-left: 24px;
@@ -351,6 +390,10 @@ body {
   .privacy-content {
     max-width: 740px;
     margin: 0 auto;
+  }
+
+  .investor-callouts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
