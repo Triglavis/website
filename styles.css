@@ -167,6 +167,8 @@ a:active {
 
 /* Chin area - bottom section */
 .chin-area {
+  position: relative;
+  z-index: 45; /* above .about-goo (40) so the goo bar never covers footer text */
   height: var(--chin-height);
   background: #000;
   display: flex;
@@ -273,15 +275,65 @@ a:active {
   text-underline-offset: 2px;
 }
 
+/* Goo layer: filtered black shapes that fuse with the frame like liquid.
+   Text never lives in here — the blur+contrast filter would destroy it. */
+.about-goo {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: min(520px, 100vh);
+  z-index: 40;
+  pointer-events: none;
+}
+
+.about-goo-shapes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  filter: url(#aboutGooFilter);
+}
+
+.about-goo-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 36px; /* chin bar + frame padding; synced by JS when the drawer is open */
+  background: #000;
+}
+
+.about-goo-card {
+  position: absolute;
+  background: #000;
+  border-radius: 12px;
+  transform: translateY(calc(100% + var(--card-bottom, 58px)));
+  transition: transform 0.4s cubic-bezier(0.55, 0.05, 0.68, 0.2);
+}
+
+.about-goo.is-open .about-goo-card {
+  transform: translateY(0);
+  transition: transform 0.6s cubic-bezier(0.24, 1.18, 0.34, 1);
+}
+
+/* Liquid bridge between the card and the frame; rides with the card
+   and overlaps both ends so the goo filter melts the junctions */
+.about-goo-stem {
+  position: absolute;
+  left: var(--stem-left, 18px);
+  bottom: -28px;
+  width: 22px;
+  height: 34px;
+  border-radius: 10px;
+  background: #000;
+}
+
+/* Unfiltered text layer, geometry-matched to the goo card by JS */
 .about-tooltip {
   position: fixed;
   z-index: 50;
   width: min(340px, calc(100vw - 24px));
-  padding: 12px 14px;
-  background: #000;
-  border: 1px solid hsl(var(--border));
-  border-radius: 9px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  padding: 14px 16px;
   font-family: 'Space Mono', monospace;
   font-size: 10px;
   line-height: 1.6;
@@ -290,35 +342,25 @@ a:active {
   -webkit-user-select: text;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(6px) scale(0.97);
-  transform-origin: bottom left;
+  transform: translateY(6px);
   pointer-events: none;
-  transition: opacity 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
-              transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
-              visibility 0s linear 0.22s;
+  transition: opacity 0.14s ease, transform 0.14s ease, visibility 0s linear 0.14s;
 }
 
 .about-tooltip.is-open {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
   pointer-events: auto;
-  transition: opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-              transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-              visibility 0s;
+  transition: opacity 0.25s ease 0.24s, transform 0.25s ease 0.24s, visibility 0s;
 }
 
-.about-tooltip::after {
-  content: '';
-  position: absolute;
-  left: var(--caret-left, 16px);
-  bottom: -5px;
-  width: 8px;
-  height: 8px;
-  background: #000;
-  border-right: 1px solid hsl(var(--border));
-  border-bottom: 1px solid hsl(var(--border));
-  transform: rotate(45deg);
+@media (prefers-reduced-motion: reduce) {
+  .about-goo-card,
+  .about-tooltip {
+    transition-duration: 0.01s;
+    transition-delay: 0s;
+  }
 }
 
 .about-tooltip p + p {

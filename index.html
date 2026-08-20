@@ -100,38 +100,72 @@
                 </div>
             </div>
         </div>
+        <div class="about-goo" id="aboutGoo" aria-hidden="true">
+            <div class="about-goo-shapes">
+                <div class="about-goo-bar" id="aboutGooBar"></div>
+                <div class="about-goo-card" id="aboutGooCard">
+                    <div class="about-goo-stem"></div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="about-tooltip" id="aboutTooltip" role="note" aria-label="About Triglavis">
         <p>We're exploring a new paradigm for working with computers: one where the computer understands the work itself, rather than forcing us to fit our work into its abstractions.</p>
         <p>Our flagship product, WorkspaceOS, is built around this idea&mdash;a living computational model of what you're trying to accomplish, where documents, presentations, plans, tasks, and other artifacts become views and tools for working with the underlying work rather than the work itself.</p>
         <p class="about-tagline">Triglavis is rethinking the computer around the work itself.</p>
     </div>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+        <defs>
+            <filter id="aboutGooFilter" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8" result="goo"/>
+                <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+            </filter>
+        </defs>
+    </svg>
     <script>
         (() => {
             const toggle = document.getElementById('aboutToggle');
             const tooltip = document.getElementById('aboutTooltip');
+            const goo = document.getElementById('aboutGoo');
+            const card = document.getElementById('aboutGooCard');
+            const bar = document.getElementById('aboutGooBar');
+            const chin = document.querySelector('.chin-area');
 
-            if (!toggle || !tooltip) return;
+            if (!toggle || !tooltip || !goo || !card || !bar) return;
 
-            const isOpen = () => tooltip.classList.contains('is-open');
+            const GAP = 22;
+
+            const isOpen = () => goo.classList.contains('is-open');
 
             const position = () => {
                 const rect = toggle.getBoundingClientRect();
+                const chinTop = chin ? chin.getBoundingClientRect().top : window.innerHeight - 36;
+                const barHeight = Math.max(0, Math.round(window.innerHeight - chinTop));
                 const margin = 12;
                 const width = tooltip.offsetWidth;
                 const left = Math.max(margin, Math.min(rect.left - 12, window.innerWidth - width - margin));
+                const bottom = barHeight + GAP;
+                bar.style.height = `${barHeight}px`;
                 tooltip.style.left = `${Math.round(left)}px`;
-                tooltip.style.bottom = `${Math.round(window.innerHeight - rect.top + 9)}px`;
-                tooltip.style.setProperty('--caret-left', `${Math.round(rect.left + rect.width / 2 - left - 4)}px`);
+                tooltip.style.bottom = `${bottom}px`;
+                card.style.left = `${Math.round(left)}px`;
+                card.style.bottom = `${bottom}px`;
+                card.style.width = `${width}px`;
+                card.style.height = `${tooltip.offsetHeight}px`;
+                card.style.setProperty('--card-bottom', `${bottom}px`);
+                card.style.setProperty('--stem-left', `${Math.round(rect.left + rect.width / 2 - left - 11)}px`);
             };
 
             const open = () => {
                 position();
+                goo.classList.add('is-open');
                 tooltip.classList.add('is-open');
                 toggle.setAttribute('aria-expanded', 'true');
             };
 
             const close = () => {
+                goo.classList.remove('is-open');
                 tooltip.classList.remove('is-open');
                 toggle.setAttribute('aria-expanded', 'false');
             };
