@@ -31,7 +31,7 @@
                     <a href="https://tryworkspaceos.com" class="copyright-contact" target="_blank" rel="noopener">WorkspaceOS</a>
                 </div>
                 <div class="copyright-right">
-                    <a href="/privacy.html" class="copyright-contact js-privacy-toggle" aria-expanded="false" aria-controls="privacyDrawer">Privacy Policy</a>
+                    <a href="/privacy.html" class="copyright-contact js-privacy-toggle" aria-expanded="false" aria-controls="privacyDrawer">Legal</a>
                     <a href="mailto:support@triglavis.com" class="copyright-contact">Contact</a>
                 </div>
             </div>
@@ -113,6 +113,7 @@
             const tooltip = document.getElementById('aboutTooltip');
             const canvas = document.getElementById('aboutGooCanvas');
             const chin = document.querySelector('.chin-area');
+            const app = document.querySelector('.app-container');
 
             if (!toggle || !tooltip || !canvas) return;
 
@@ -244,7 +245,13 @@
                 const margin = 12;
                 geo.cardW = tooltip.offsetWidth;
                 geo.cardH = tooltip.offsetHeight;
-                geo.cardLeft = Math.max(margin, Math.min(rect.left - 12, window.innerWidth - geo.cardW - margin));
+                // Anchor the card's left edge just outside the toggle on wide
+                // viewports; on narrow ones that anchor would push the card
+                // right of centre, so centre it instead. Taking the smaller of
+                // the two keeps the transition continuous with no breakpoint.
+                const anchoredLeft = rect.left - 12;
+                const centeredLeft = (window.innerWidth - geo.cardW) / 2;
+                geo.cardLeft = Math.round(Math.max(margin, Math.min(anchoredLeft, centeredLeft, window.innerWidth - geo.cardW - margin)));
                 geo.cardBottom = geo.barTop + GAP;
                 geo.stemLeft = Math.round(rect.left + rect.width / 2 - STEM_WIDTH / 2);
                 tooltip.style.left = `${Math.round(geo.cardLeft)}px`;
@@ -309,10 +316,42 @@
                 animateTo(0, CLOSE_MS, easeClose);
             };
 
+            // Resolve once the chin's height transition has finished, so a
+            // tooltip opened after closing the privacy drawer rises out of
+            // the settled frame instead of riding the collapsing chin. The
+            // timer is a fallback for the (unexpected) case where no height
+            // transition fires at all.
+            let cancelPendingOpen = null;
+            const afterChinSettles = (callback) => {
+                const SETTLE_FALLBACK_MS = 450;
+                let timer = null;
+                const cleanup = () => {
+                    chin.removeEventListener('transitionend', onTransitionEnd);
+                    window.clearTimeout(timer);
+                    cancelPendingOpen = null;
+                };
+                const finish = () => {
+                    cleanup();
+                    callback();
+                };
+                const onTransitionEnd = (event) => {
+                    if (event.target === chin && event.propertyName === 'height') finish();
+                };
+                chin.addEventListener('transitionend', onTransitionEnd);
+                timer = window.setTimeout(finish, SETTLE_FALLBACK_MS);
+                cancelPendingOpen = cleanup;
+            };
+
             toggle.addEventListener('click', (event) => {
                 event.stopPropagation();
+                if (cancelPendingOpen) cancelPendingOpen();
                 if (open) {
                     closeTip();
+                    return;
+                }
+                if (app && chin && app.classList.contains('privacy-open')) {
+                    app.dispatchEvent(new CustomEvent('privacy:close'));
+                    afterChinSettles(openTip);
                     return;
                 }
                 openTip();
@@ -329,13 +368,24 @@
                 }
             });
 
-            window.addEventListener('resize', () => {
+            const sync = () => {
                 position();
                 render();
-            });
+            };
 
-            position();
-            render();
+            window.addEventListener('resize', sync);
+
+            // The bar the shader paints is derived from the chin's live
+            // geometry, and the chin changes height on its own (privacy
+            // drawer open/close transitions, drag-resizing) without any
+            // window resize. Observing it directly re-samples barTop on
+            // every frame the chin's box changes, so the painted bar can
+            // never be left behind at a mid-transition height.
+            if (chin && 'ResizeObserver' in window) {
+                new ResizeObserver(sync).observe(chin);
+            }
+
+            sync();
         })();
     </script>
     <script>
@@ -597,6 +647,14 @@
                     return;
                 }
                 openDrawer();
+            });
+
+            // Lets other footer controls (the about toggletip) dismiss the
+            // drawer without reaching into this closure
+            app.addEventListener('privacy:close', () => {
+                if (app.classList.contains('privacy-open')) {
+                    closeDrawer({ snap: true });
+                }
             });
 
             scroll.addEventListener('scroll', () => {
