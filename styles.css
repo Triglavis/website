@@ -303,9 +303,9 @@ a:active {
   position: fixed;
   z-index: 50;
   width: min(340px, calc(100vw - 24px));
-  padding: 14px 16px;
+  padding: 15px;
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.6;
   color: hsl(var(--muted-foreground));
   user-select: text;
