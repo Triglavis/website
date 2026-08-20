@@ -45,6 +45,17 @@ body {
   -ms-user-select: none;
 }
 
+a {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+a:hover,
+a:active {
+  text-decoration-style: solid;
+}
+
 .container {
   position: absolute;
   top: 0;
@@ -156,6 +167,8 @@ body {
 
 /* Chin area - bottom section */
 .chin-area {
+  position: relative;
+  z-index: 45; /* above .about-goo (40) so the goo bar never covers footer text */
   height: var(--chin-height);
   background: #000;
   display: flex;
@@ -198,6 +211,7 @@ body {
 .copyright-left {
   display: flex;
   align-items: center;
+  gap: 7px;
 }
 
 .copyright-right {
@@ -221,7 +235,7 @@ body {
   font-family: 'Space Mono', monospace;
   font-size: 9px;
   color: hsl(var(--muted-foreground));
-  text-decoration: underline;
+  text-decoration: none;
   opacity: 0.7;
   background: none;
   border: none;
@@ -229,8 +243,101 @@ body {
   cursor: pointer;
 }
 
-.copyright-contact:hover {
+.copyright-contact:hover,
+.copyright-contact:active {
   opacity: 1;
+  text-decoration: underline;
+}
+
+.footer-sep {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.3;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* About toggletip */
+.about-toggle {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.about-toggle:hover,
+.about-toggle[aria-expanded="true"] {
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Goo layer: a WebGL canvas rendering the frame bar, card, and stem as
+   signed distance fields fused with a smooth-minimum — the liquid
+   meniscus is computed analytically in the shader, with no browser
+   filter or blend involved, so every engine renders identical output */
+.about-goo {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: min(520px, 100vh);
+  z-index: 40;
+  pointer-events: none;
+  display: block;
+}
+
+/* If WebGL is unavailable the goo canvas stays empty; give the text
+   layer its own solid card so the copy remains readable */
+.about-tooltip.about-tooltip-solid {
+  background: #000;
+  border-radius: 12px;
+}
+
+/* Unfiltered text layer, geometry-matched to the goo card by JS */
+.about-tooltip {
+  position: fixed;
+  z-index: 50;
+  width: min(340px, calc(100vw - 24px));
+  padding: 14px 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+  user-select: text;
+  -webkit-user-select: text;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity 0.14s ease, transform 0.14s ease, visibility 0s linear 0.14s;
+}
+
+.about-tooltip.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition: opacity 0.25s ease 0.24s, transform 0.25s ease 0.24s, visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-tooltip {
+    transition-duration: 0.01s;
+    transition-delay: 0s;
+  }
+}
+
+.about-tooltip p + p {
+  margin-top: 8px;
+}
+
+.about-tooltip .about-tagline {
+  color: hsl(var(--foreground));
 }
 
 .privacy-drawer {
