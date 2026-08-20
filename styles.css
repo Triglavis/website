@@ -275,63 +275,27 @@ a:active {
   text-underline-offset: 2px;
 }
 
-/* Goo layer: filtered black shapes that fuse with the frame like liquid.
-   Text never lives in here — the blur+contrast filter would destroy it.
-   blur()+contrast() needs luminance to crush, so the shapes sit on an
-   opaque white ground; mix-blend-mode: darken then erases the white
-   against the page while the black goo survives. CSS filter functions
-   (unlike SVG url() filters) animate smoothly in Safari too. */
+/* Goo layer: a WebGL canvas rendering the frame bar, card, and stem as
+   signed distance fields fused with a smooth-minimum — the liquid
+   meniscus is computed analytically in the shader, with no browser
+   filter or blend involved, so every engine renders identical output */
 .about-goo {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100%;
   height: min(520px, 100vh);
   z-index: 40;
   pointer-events: none;
-  mix-blend-mode: darken;
+  display: block;
 }
 
-.about-goo-shapes {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: #fff;
-  filter: blur(7px) contrast(30);
-}
-
-.about-goo-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 36px; /* chin bar + frame padding; synced by JS when the drawer is open */
-  background: #000;
-}
-
-.about-goo-card {
-  position: absolute;
+/* If WebGL is unavailable the goo canvas stays empty; give the text
+   layer its own solid card so the copy remains readable */
+.about-tooltip.about-tooltip-solid {
   background: #000;
   border-radius: 12px;
-  transform: translateY(calc(100% + var(--card-bottom, 58px)));
-  transition: transform 0.4s cubic-bezier(0.55, 0.05, 0.68, 0.2);
-}
-
-.about-goo.is-open .about-goo-card {
-  transform: translateY(0);
-  transition: transform 0.6s cubic-bezier(0.24, 1.18, 0.34, 1);
-}
-
-/* Liquid bridge between the card and the frame; rides with the card
-   and overlaps both ends so the goo filter melts the junctions */
-.about-goo-stem {
-  position: absolute;
-  left: var(--stem-left, 18px);
-  bottom: -28px;
-  width: 22px;
-  height: 34px;
-  border-radius: 10px;
-  background: #000;
 }
 
 /* Unfiltered text layer, geometry-matched to the goo card by JS */
@@ -362,7 +326,6 @@ a:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .about-goo-card,
   .about-tooltip {
     transition-duration: 0.01s;
     transition-delay: 0s;
