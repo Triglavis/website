@@ -136,6 +136,12 @@
 
             const GAP = 22;
 
+            // Safari doesn't re-evaluate SVG url() filters while a child's
+            // transform animates, so the goo fusion pops in after the card
+            // settles. Fall back to a filterless flush extrusion there.
+            const plainMode = /^((?!chrome|chromium|crios|android).)*safari/i.test(navigator.userAgent);
+            if (plainMode) goo.classList.add('about-goo-plain');
+
             const isOpen = () => goo.classList.contains('is-open');
 
             const position = () => {
@@ -145,15 +151,16 @@
                 const margin = 12;
                 const width = tooltip.offsetWidth;
                 const left = Math.max(margin, Math.min(rect.left - 12, window.innerWidth - width - margin));
-                const bottom = barHeight + GAP;
+                const bottom = barHeight + (plainMode ? 0 : GAP);
+                const overlap = plainMode ? 14 : 0;
                 bar.style.height = `${barHeight}px`;
                 tooltip.style.left = `${Math.round(left)}px`;
                 tooltip.style.bottom = `${bottom}px`;
                 card.style.left = `${Math.round(left)}px`;
-                card.style.bottom = `${bottom}px`;
+                card.style.bottom = `${bottom - overlap}px`;
                 card.style.width = `${width}px`;
-                card.style.height = `${tooltip.offsetHeight}px`;
-                card.style.setProperty('--card-bottom', `${bottom}px`);
+                card.style.height = `${tooltip.offsetHeight + overlap}px`;
+                card.style.setProperty('--card-bottom', `${bottom - overlap}px`);
                 card.style.setProperty('--stem-left', `${Math.round(rect.left + rect.width / 2 - left - 11)}px`);
             };
 
@@ -193,6 +200,11 @@
             window.addEventListener('resize', () => {
                 if (isOpen()) position();
             });
+
+            // Give the card real geometry immediately: unpositioned it
+            // collapses to 0x0 at the goo layer's top-left, leaving the
+            // stem visible as a stray black blob until the first open
+            position();
         })();
     </script>
     <script>

@@ -328,6 +328,20 @@ a:active {
   background: #000;
 }
 
+/* Filterless fallback (Safari): the card extrudes flush from the frame,
+   slightly overlapped into the bar so the open overshoot never shows a gap */
+.about-goo.about-goo-plain .about-goo-shapes {
+  filter: none;
+}
+
+.about-goo.about-goo-plain .about-goo-stem {
+  display: none;
+}
+
+.about-goo.about-goo-plain .about-goo-card {
+  border-radius: 12px 12px 0 0;
+}
+
 /* Unfiltered text layer, geometry-matched to the goo card by JS */
 .about-tooltip {
   position: fixed;
