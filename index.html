@@ -114,15 +114,6 @@
         <p>Our flagship product, WorkspaceOS, is built around this idea&mdash;a living computational model of what you're trying to accomplish, where documents, presentations, plans, tasks, and other artifacts become views and tools for working with the underlying work rather than the work itself.</p>
         <p class="about-tagline">Triglavis is rethinking the computer around the work itself.</p>
     </div>
-    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
-        <defs>
-            <filter id="aboutGooFilter" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
-                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8" result="goo"/>
-                <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
-            </filter>
-        </defs>
-    </svg>
     <script>
         (() => {
             const toggle = document.getElementById('aboutToggle');
@@ -136,12 +127,6 @@
 
             const GAP = 22;
 
-            // Safari doesn't re-evaluate SVG url() filters while a child's
-            // transform animates, so the goo fusion pops in after the card
-            // settles. Fall back to a filterless flush extrusion there.
-            const plainMode = /^((?!chrome|chromium|crios|android).)*safari/i.test(navigator.userAgent);
-            if (plainMode) goo.classList.add('about-goo-plain');
-
             const isOpen = () => goo.classList.contains('is-open');
 
             const position = () => {
@@ -151,16 +136,15 @@
                 const margin = 12;
                 const width = tooltip.offsetWidth;
                 const left = Math.max(margin, Math.min(rect.left - 12, window.innerWidth - width - margin));
-                const bottom = barHeight + (plainMode ? 0 : GAP);
-                const overlap = plainMode ? 14 : 0;
+                const bottom = barHeight + GAP;
                 bar.style.height = `${barHeight}px`;
                 tooltip.style.left = `${Math.round(left)}px`;
                 tooltip.style.bottom = `${bottom}px`;
                 card.style.left = `${Math.round(left)}px`;
-                card.style.bottom = `${bottom - overlap}px`;
+                card.style.bottom = `${bottom}px`;
                 card.style.width = `${width}px`;
-                card.style.height = `${tooltip.offsetHeight + overlap}px`;
-                card.style.setProperty('--card-bottom', `${bottom - overlap}px`);
+                card.style.height = `${tooltip.offsetHeight}px`;
+                card.style.setProperty('--card-bottom', `${bottom}px`);
                 card.style.setProperty('--stem-left', `${Math.round(rect.left + rect.width / 2 - left - 11)}px`);
             };
 

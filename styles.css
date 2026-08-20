@@ -276,7 +276,11 @@ a:active {
 }
 
 /* Goo layer: filtered black shapes that fuse with the frame like liquid.
-   Text never lives in here — the blur+contrast filter would destroy it. */
+   Text never lives in here — the blur+contrast filter would destroy it.
+   blur()+contrast() needs luminance to crush, so the shapes sit on an
+   opaque white ground; mix-blend-mode: darken then erases the white
+   against the page while the black goo survives. CSS filter functions
+   (unlike SVG url() filters) animate smoothly in Safari too. */
 .about-goo {
   position: fixed;
   left: 0;
@@ -285,13 +289,15 @@ a:active {
   height: min(520px, 100vh);
   z-index: 40;
   pointer-events: none;
+  mix-blend-mode: darken;
 }
 
 .about-goo-shapes {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  filter: url(#aboutGooFilter);
+  background: #fff;
+  filter: blur(7px) contrast(30);
 }
 
 .about-goo-bar {
@@ -326,20 +332,6 @@ a:active {
   height: 34px;
   border-radius: 10px;
   background: #000;
-}
-
-/* Filterless fallback (Safari): the card extrudes flush from the frame,
-   slightly overlapped into the bar so the open overshoot never shows a gap */
-.about-goo.about-goo-plain .about-goo-shapes {
-  filter: none;
-}
-
-.about-goo.about-goo-plain .about-goo-stem {
-  display: none;
-}
-
-.about-goo.about-goo-plain .about-goo-card {
-  border-radius: 12px 12px 0 0;
 }
 
 /* Unfiltered text layer, geometry-matched to the goo card by JS */
