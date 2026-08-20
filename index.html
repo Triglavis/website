@@ -26,7 +26,9 @@
         <div class="chin-area">
             <div class="copyright-container">
                 <div class="copyright-left">
-                    <span class="copyright-text">© 2026 <a href="/" style="color: inherit; text-decoration: none;">Triglavis LLC</a>™</span>
+                    <span class="copyright-text">© 2026 <button type="button" class="about-toggle" id="aboutToggle" aria-expanded="false" aria-controls="aboutTooltip">Triglavis LLC</button>™</span>
+                    <span class="footer-sep" aria-hidden="true">|</span>
+                    <a href="https://tryworkspaceos.com" class="copyright-contact" target="_blank" rel="noopener">WorkspaceOS</a>
                 </div>
                 <div class="copyright-right">
                     <a href="/privacy.html" class="copyright-contact js-privacy-toggle" aria-expanded="false" aria-controls="privacyDrawer">Privacy Policy</a>
@@ -99,6 +101,66 @@
             </div>
         </div>
     </div>
+    <div class="about-tooltip" id="aboutTooltip" role="note" aria-label="About Triglavis">
+        <p>We're exploring a new paradigm for working with computers: one where the computer understands the work itself, rather than forcing us to fit our work into its abstractions.</p>
+        <p>Our flagship product, WorkspaceOS, is built around this idea&mdash;a living computational model of what you're trying to accomplish, where documents, presentations, plans, tasks, and other artifacts become views and tools for working with the underlying work rather than the work itself.</p>
+        <p class="about-tagline">Triglavis is rethinking the computer around the work itself.</p>
+    </div>
+    <script>
+        (() => {
+            const toggle = document.getElementById('aboutToggle');
+            const tooltip = document.getElementById('aboutTooltip');
+
+            if (!toggle || !tooltip) return;
+
+            const isOpen = () => tooltip.classList.contains('is-open');
+
+            const position = () => {
+                const rect = toggle.getBoundingClientRect();
+                const margin = 12;
+                const width = tooltip.offsetWidth;
+                const left = Math.max(margin, Math.min(rect.left - 12, window.innerWidth - width - margin));
+                tooltip.style.left = `${Math.round(left)}px`;
+                tooltip.style.bottom = `${Math.round(window.innerHeight - rect.top + 9)}px`;
+                tooltip.style.setProperty('--caret-left', `${Math.round(rect.left + rect.width / 2 - left - 4)}px`);
+            };
+
+            const open = () => {
+                position();
+                tooltip.classList.add('is-open');
+                toggle.setAttribute('aria-expanded', 'true');
+            };
+
+            const close = () => {
+                tooltip.classList.remove('is-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            };
+
+            toggle.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (isOpen()) {
+                    close();
+                    return;
+                }
+                open();
+            });
+
+            document.addEventListener('click', (event) => {
+                if (isOpen() && !tooltip.contains(event.target)) close();
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && isOpen()) {
+                    close();
+                    toggle.focus();
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                if (isOpen()) position();
+            });
+        })();
+    </script>
     <script>
         (() => {
             const app = document.querySelector('.app-container');

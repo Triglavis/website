@@ -45,6 +45,17 @@ body {
   -ms-user-select: none;
 }
 
+a {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+a:hover,
+a:active {
+  text-decoration-style: solid;
+}
+
 .container {
   position: absolute;
   top: 0;
@@ -198,6 +209,7 @@ body {
 .copyright-left {
   display: flex;
   align-items: center;
+  gap: 7px;
 }
 
 .copyright-right {
@@ -221,7 +233,6 @@ body {
   font-family: 'Space Mono', monospace;
   font-size: 9px;
   color: hsl(var(--muted-foreground));
-  text-decoration: underline;
   opacity: 0.7;
   background: none;
   border: none;
@@ -231,6 +242,86 @@ body {
 
 .copyright-contact:hover {
   opacity: 1;
+}
+
+.footer-sep {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.3;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* About toggletip */
+.about-toggle {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.about-toggle:hover,
+.about-toggle[aria-expanded="true"] {
+  color: hsl(var(--foreground));
+}
+
+.about-tooltip {
+  position: fixed;
+  z-index: 50;
+  width: min(340px, calc(100vw - 24px));
+  padding: 12px 14px;
+  background: #000;
+  border: 1px solid hsl(var(--border));
+  border-radius: 9px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+  user-select: text;
+  -webkit-user-select: text;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px) scale(0.97);
+  transform-origin: bottom left;
+  pointer-events: none;
+  transition: opacity 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+              transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+              visibility 0s linear 0.22s;
+}
+
+.about-tooltip.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  transition: opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+              transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+              visibility 0s;
+}
+
+.about-tooltip::after {
+  content: '';
+  position: absolute;
+  left: var(--caret-left, 16px);
+  bottom: -5px;
+  width: 8px;
+  height: 8px;
+  background: #000;
+  border-right: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+  transform: rotate(45deg);
+}
+
+.about-tooltip p + p {
+  margin-top: 8px;
+}
+
+.about-tooltip .about-tagline {
+  color: hsl(var(--foreground));
 }
 
 .privacy-drawer {
